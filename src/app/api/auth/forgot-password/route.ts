@@ -41,6 +41,20 @@ export async function POST(req: Request) {
       },
     });
 
+    // Dispatch Supabase Auth reset email if configured
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      if (supabaseUrl && !supabaseUrl.includes('placeholder')) {
+        const { createClient } = await import('@/lib/supabase/server');
+        const supabase = await createClient();
+        await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/reset-password`,
+        });
+      }
+    } catch {
+      // Non-blocking fallback
+    }
+
     const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
 
     // Development local logger for testing reset flow

@@ -43,6 +43,41 @@ export async function POST(req: Request) {
       );
     }
 
+    // Sync Supabase Auth session if Supabase is configured
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      if (supabaseUrl && !supabaseUrl.includes('placeholder')) {
+        const { createClient } = await import('@/lib/supabase/server');
+        const supabase = await createClient();
+        const { data: sbData, error: sbError } = await supabase.auth.signInWithPassword({ email, password });
+        
+        if (sbError && sbError.message.includes('Invalid login credentials')) {
+          const { createAdminClient } = await import('@/lib/supabase/admin');
+          const adminClient = createAdminClient();
+          const { data: createdSbUser } = await adminClient.auth.admin.createUser({
+            email,
+            password,
+            email_confirm: true,
+            user_metadata: { name: user.name, role: user.role },
+          });
+          if (createdSbUser?.user) {
+            await prisma.user.update({
+              where: { id: user.id },
+              data: { supabaseUid: createdSbUser.user.id },
+            });
+            await supabase.auth.signInWithPassword({ email, password });
+          }
+        } else if (sbData?.user && !user.supabaseUid) {
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { supabaseUid: sbData.user.id },
+          });
+        }
+      }
+    } catch {
+      // Non-blocking fallback to local session
+    }
+
     // Generate session token
     const token = await signSessionToken({
       id: user.id,

@@ -50,6 +50,17 @@ export async function POST(req: Request) {
       },
     });
 
+    // Sync updated password with Supabase Auth
+    try {
+      if (user.supabaseUid) {
+        const { createAdminClient } = await import('@/lib/supabase/admin');
+        const adminClient = createAdminClient();
+        await adminClient.auth.admin.updateUserById(user.supabaseUid, { password: newPassword });
+      }
+    } catch {
+      // Non-blocking fallback
+    }
+
     return NextResponse.json({
       success: true,
       message: 'Password reset successfully. You can now log in with your new password.',

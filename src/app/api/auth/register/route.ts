@@ -49,6 +49,28 @@ export async function POST(req: Request) {
 
     const hashedPassword = await hashPassword(password);
 
+    // Sync with Supabase Auth if configured
+    let supabaseUid: string | null = null;
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      if (supabaseUrl && !supabaseUrl.includes('placeholder')) {
+        const { createClient } = await import('@/lib/supabase/server');
+        const supabase = await createClient();
+        const { data: sbAuth } = await supabase.auth.signUp({
+          email: email.toLowerCase(),
+          password,
+          options: {
+            data: { name, role: 'CUSTOMER', companyName },
+          },
+        });
+        if (sbAuth?.user) {
+          supabaseUid = sbAuth.user.id;
+        }
+      }
+    } catch {
+      // Non-blocking fallback
+    }
+
     // Create user and linked customer profile in a transaction
     const result = await prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
@@ -57,6 +79,7 @@ export async function POST(req: Request) {
           email: email.toLowerCase(),
           passwordHash: hashedPassword,
           role: Role.CUSTOMER,
+          supabaseUid: supabaseUid || null,
         },
       });
 

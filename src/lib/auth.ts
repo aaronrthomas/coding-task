@@ -58,13 +58,52 @@ export async function verifySessionToken(token: string): Promise<UserSession | n
 }
 
 /**
- * Server-side helper to retrieve the authenticated session from cookies
+ * Server-side helper to retrieve the authenticated session from cookies (Supabase Auth & JWT)
  */
 export async function getSession(): Promise<UserSession | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
-  if (!token) return null;
-  return verifySessionToken(token);
+  if (token) {
+    const session = await verifySessionToken(token);
+    if (session) return session;
+  }
+
+  // Check Supabase Auth session via @supabase/ssr
+  try {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (supabaseUrl && supabaseKey && !supabaseUrl.includes('placeholder')) {
+      const { createClient } = await import('@/lib/supabase/server');
+      const supabase = await createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (user && user.email) {
+        const dbUser = await prisma.user.findFirst({
+          where: {
+            OR: [
+              { supabaseUid: user.id },
+              { email: user.email.toLowerCase() },
+            ],
+          },
+          include: { customerProfile: true },
+        });
+
+        if (dbUser && dbUser.isActive) {
+          return {
+            id: dbUser.id,
+            email: dbUser.email,
+            name: dbUser.name,
+            role: dbUser.role,
+            customerId: dbUser.customerProfile?.id || null,
+          };
+        }
+      }
+    }
+  } catch {
+    // Graceful fallback if Supabase Auth is unreachable
+  }
+
+  return null;
 }
 
 /**

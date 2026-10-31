@@ -180,47 +180,73 @@ The system is structured as a monolithic Next.js App Router application backed b
    ```
 
 3. **Configure Environment Variables**:
-   Create a `.env` file in the root directory (or copy from `.env.example`):
-   ```env
-   # Database Connection String
-   DATABASE_URL="postgresql://postgres:postgres@localhost:8000/brightloop_db?schema=public"
-
-   # Auth & Session Secret (minimum 32 characters)
-   JWT_SECRET="brightloop-super-secret-jwt-token-key-2026-production-grade"
-
-   # Billing Engine Cron Trigger Secret
-   BILLING_CRON_SECRET="brightloop-billing-cron-secret-key-2026"
-
-   # Application URL
-   NEXT_PUBLIC_APP_URL="http://localhost:3000"
-   NODE_ENV="development"
+   Copy `.env.example` to `.env` and fill in your Supabase connection strings:
+   ```bash
+   cp .env.example .env
    ```
 
 ---
 
-## Database Setup & Seeding
+## Supabase Integration & Database Setup
 
-1. **Push Schema to PostgreSQL**:
-   ```bash
-   npx prisma db push
-   ```
-   *(Or run migrations using `npx prisma migrate dev`)*
+The application is natively integrated with **Supabase PostgreSQL**, **Supabase Auth**, and **Row Level Security (RLS)** via `@supabase/supabase-js` and `@supabase/ssr`.
 
-2. **Seed Database with Demo Data**:
-   ```bash
-   npm run db:seed
-   ```
-   The seed script populates the database with:
-   - 1 Admin user (`admin@brightloop.com`)
-   - 2 Staff users (`sarah.staff@brightloop.com`, `david.billing@brightloop.com`)
-   - 5 Customers with linked user portal accounts
-   - 4 Products with configurable variants
-   - 4 Subscription plans (Daily, Weekly, Monthly, Yearly)
-   - Multiple tax rules (GST 18%, VAT 20%, State Tax 8%)
-   - Discount rules (active, expired, and usage-exhausted)
-   - Realistic subscriptions in all lifecycle states (`Draft`, `Quotation`, `Confirmed`, `Active`, `Paused`, `Closed`)
-   - Invoices across all statuses (`Draft`, `Confirmed`, `Paid`, `Partially Paid`, `Overdue`)
-   - Payment transaction records and billing history
+### Step 1: Create a Supabase Project
+1. Navigate to [supabase.com](https://supabase.com) and create a new project.
+2. Note your database password, project reference URL, and API keys.
+
+### Step 2: Configure `.env`
+In your `.env` file, populate your Supabase credentials:
+```env
+# 1. Supabase Project Credentials (Found in Project Settings -> API)
+NEXT_PUBLIC_SUPABASE_URL="https://your-project.supabase.co"
+NEXT_PUBLIC_SUPABASE_ANON_KEY="your-anon-key"
+SUPABASE_SERVICE_ROLE_KEY="your-service-role-key"
+
+# 2. Supabase PostgreSQL Connection Strings (Found in Project Settings -> Database)
+# Transaction pooler (port 6543) for runtime queries
+DATABASE_URL="postgresql://postgres.[ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres?pgbouncer=true"
+
+# Session mode / direct connection (port 5432) for schema push and migrations
+DIRECT_URL="postgresql://postgres.[ref]:[password]@aws-0-[region].pooler.supabase.com:5432/postgres"
+
+# 3. Application Secrets
+JWT_SECRET="brightloop-super-secret-jwt-token-key-2026-production-grade"
+BILLING_CRON_SECRET="brightloop-billing-cron-secret-key-2026"
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
+NODE_ENV="development"
+```
+
+### Step 3: Run Database Migrations & RLS Policies
+You can deploy the database schema and Row Level Security policies using either method:
+
+#### Option A: Supabase SQL Editor (Recommended)
+1. Open your Supabase Dashboard &rarr; **SQL Editor**.
+2. Open `supabase/migrations/20261031000000_init_supabase_schema.sql`.
+3. Paste and execute the script. It creates all tables, foreign keys, idempotency constraints, indices, RLS policies, and auth sync triggers.
+
+#### Option B: Prisma CLI
+```bash
+npx prisma db push
+```
+
+### Step 4: Seed Initial Data
+Seed the catalog, plans, tax rules, discount coupons, and demo accounts:
+
+#### Option A: Supabase SQL Editor
+Run `supabase/seed.sql` in the Supabase SQL Editor.
+
+#### Option B: Local TypeScript Seeder
+```bash
+npm run db:seed
+```
+
+### Row Level Security (RLS) Policy Overview
+- **Customer Isolation**: Customer users can only read their own customer profile, invoices, subscriptions, and payment receipts (`customer_id = get_current_customer_id()`). Direct object reference (IDOR) attacks are blocked at the database engine level.
+- **Admin & Staff Authorization**:
+  - `ADMIN`: Full read/write access across all tables, system settings, tax configurations, and staff users.
+  - `STAFF`: Operational read/write on customers, quotations, subscriptions, invoices, and payments. Restricted from staff provisioning and system settings.
+- **Server-Side Security**: All financial calculations, invoice generation, discount verification, and recurring billing runs execute exclusively on the server, ensuring client inputs cannot tamper with prices or balances.
 
 ---
 
