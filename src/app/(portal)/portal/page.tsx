@@ -234,11 +234,20 @@ export default function CustomerPortalOverviewPage() {
                       {formatCurrency(inv.outstandingBalance)}
                     </td>
                     <td className="py-2.5 px-4 text-right">
-                      <Link href={`/portal/invoices/${inv.id}`}>
-                        <Button variant="outline" size="sm" className="h-6 text-[11px]">
-                          View
-                        </Button>
-                      </Link>
+                      <div className="flex items-center justify-end gap-1.5">
+                        <Link href={`/portal/invoices/${inv.id}`}>
+                          <Button variant="outline" size="sm" className="h-6 text-[11px]">
+                            View
+                          </Button>
+                        </Link>
+                        {Number(inv.outstandingBalance) > 0 && inv.status !== 'CANCELLED' && (
+                          <Link href={`/portal/invoices/${inv.id}`}>
+                            <Button size="sm" className="h-6 text-[11px] bg-indigo-600 hover:bg-indigo-700 text-white font-semibold">
+                              Pay
+                            </Button>
+                          </Link>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))

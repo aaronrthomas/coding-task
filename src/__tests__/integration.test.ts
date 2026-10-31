@@ -12,6 +12,7 @@ describe('Integration: Business-Critical Workflows', () => {
       try {
         await prisma.billingRecord.deleteMany({ where: { subscriptionId: createdTestSubId } });
         await prisma.invoiceItem.deleteMany({ where: { invoice: { subscriptionId: createdTestSubId } } });
+        await prisma.payment.deleteMany({ where: { invoice: { subscriptionId: createdTestSubId } } });
         await prisma.invoice.deleteMany({ where: { subscriptionId: createdTestSubId } });
         await prisma.subscriptionStatusHistory.deleteMany({ where: { subscriptionId: createdTestSubId } });
         await prisma.subscriptionItem.deleteMany({ where: { subscriptionId: createdTestSubId } });
@@ -85,5 +86,51 @@ describe('Integration: Business-Critical Workflows', () => {
     // Run 2: Immediate retry - Must NOT create duplicate invoice (next billing date has advanced)
     const run2 = await runRecurringBillingEngine(testSub.id);
     expect(run2.invoicesCreated).toBe(0);
+
+    // Requirement: Customer pays the invoice, updates balance, and reflects in Admin/Staff records
+    const invoiceToPay = createdInvoice!;
+    const paymentAmount = Number(invoiceToPay.outstandingBalance);
+
+    // Record the payment
+    const payment = await prisma.$transaction(async (tx) => {
+      const p = await tx.payment.create({
+        data: {
+          paymentReference: `PAY-TEST-${Date.now()}`,
+          invoiceId: invoiceToPay.id,
+          customerId: invoiceToPay.customerId,
+          amount: new Prisma.Decimal(paymentAmount),
+          paymentDate: new Date(),
+          paymentMethod: 'CARD',
+          transactionRef: 'STRIPE_CH_TEST_998',
+          notes: 'Customer paid online via portal checkout',
+        },
+      });
+
+      await tx.invoice.update({
+        where: { id: invoiceToPay.id },
+        data: {
+          amountPaid: new Prisma.Decimal(paymentAmount),
+          outstandingBalance: new Prisma.Decimal(0),
+          status: 'PAID',
+        },
+      });
+
+      return p;
+    });
+
+    expect(payment.id).toBeDefined();
+
+    // Verify from Admin / Staff perspective: Invoice is now PAID with 0 balance
+    const updatedInvoiceForAdmin = await prisma.invoice.findUnique({
+      where: { id: invoiceToPay.id },
+      include: { customer: true, payments: true },
+    });
+
+    expect(updatedInvoiceForAdmin?.status).toBe('PAID');
+    expect(Number(updatedInvoiceForAdmin?.outstandingBalance)).toBe(0);
+    expect(Number(updatedInvoiceForAdmin?.amountPaid)).toBe(paymentAmount);
+    expect(updatedInvoiceForAdmin?.payments.length).toBe(1);
+    expect(updatedInvoiceForAdmin?.payments[0].transactionRef).toBe('STRIPE_CH_TEST_998');
   });
 });
+

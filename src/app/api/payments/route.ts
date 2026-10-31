@@ -69,7 +69,7 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const session = await requireAuth([Role.ADMIN, Role.STAFF]);
+    const session = await requireAuth();
 
     const body = await req.json();
     const parsed = recordPaymentSchema.safeParse(body);
@@ -92,6 +92,11 @@ export async function POST(req: Request) {
 
       if (!invoice) {
         throw new Error('Invoice not found');
+      }
+
+      // Customer ownership validation: customers can only pay for their own invoices
+      if (session.role === Role.CUSTOMER && invoice.customerId !== session.customerId) {
+        throw new Error('FORBIDDEN: You can only pay invoices belonging to your customer profile.');
       }
 
       if (invoice.status === InvoiceStatus.CANCELLED) {

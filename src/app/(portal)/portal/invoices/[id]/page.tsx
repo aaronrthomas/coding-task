@@ -7,7 +7,12 @@ import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/ui/badge';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { toast } from 'sonner';
-import { ArrowLeft, Printer } from 'lucide-react';
+import { ArrowLeft, Printer, CreditCard, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { Modal } from '@/components/ui/modal';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select } from '@/components/ui/select';
+import { PaymentMethod } from '@prisma/client';
 
 export default function CustomerInvoiceDetailPage({
   params,
@@ -18,25 +23,66 @@ export default function CustomerInvoiceDetailPage({
   const [invoice, setInvoice] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchInvoice = async () => {
-      setLoading(true);
-      try {
-        const res = await fetch(`/api/invoices/${id}`);
-        const json = await res.json();
-        if (json.success) {
-          setInvoice(json.data);
-        } else {
-          toast.error(json.error || 'Invoice not found');
-        }
-      } catch {
-        toast.error('Failed to load invoice');
-      } finally {
-        setLoading(false);
+  // Pay Modal
+  const [isPayModalOpen, setIsPayModalOpen] = useState(false);
+  const [amount, setAmount] = useState<number>(0);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(PaymentMethod.CARD);
+  const [transactionRef, setTransactionRef] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const fetchInvoice = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/invoices/${id}`);
+      const json = await res.json();
+      if (json.success) {
+        setInvoice(json.data);
+        setAmount(Number(json.data.outstandingBalance));
+      } else {
+        toast.error(json.error || 'Invoice not found');
       }
-    };
+    } catch {
+      toast.error('Failed to load invoice');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchInvoice();
   }, [id]);
+
+  const handlePayment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!invoice) return;
+    setSubmitting(true);
+    try {
+      const res = await fetch('/api/payments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          invoiceId: invoice.id,
+          amount: Number(amount),
+          paymentMethod,
+          transactionRef: transactionRef || null,
+          notes: 'Customer online payment via Portal',
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success(`Payment of ₹${Number(amount).toLocaleString()} confirmed!`);
+        setIsPayModalOpen(false);
+        fetchInvoice();
+      } else {
+        toast.error(data.error || 'Payment failed');
+      }
+    } catch {
+      toast.error('Network error during payment submission');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   if (loading) {
     return <div className="p-8 text-center text-slate-500">Loading invoice document...</div>;
@@ -51,8 +97,11 @@ export default function CustomerInvoiceDetailPage({
     );
   }
 
+  const isOutstanding = Number(invoice.outstandingBalance) > 0 && invoice.status !== 'CANCELLED';
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-12">
+      {/* Navigation & Print Actions */}
       <div className="flex items-center justify-between print:hidden">
         <Link
           href="/portal/invoices"
@@ -62,17 +111,65 @@ export default function CustomerInvoiceDetailPage({
           Back to My Invoices
         </Link>
 
-        <Button variant="outline" size="sm" onClick={() => window.print()} className="text-xs">
-          <Printer className="mr-1.5 h-3.5 w-3.5" />
-          Print / Save PDF
-        </Button>
+        <div className="flex items-center gap-2">
+          {isOutstanding && (
+            <Button
+              size="sm"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold cursor-pointer text-xs"
+              onClick={() => {
+                setAmount(Number(invoice.outstandingBalance));
+                setTransactionRef(`TXN-${Date.now().toString().slice(-6)}`);
+                setIsPayModalOpen(true);
+              }}
+            >
+              <CreditCard className="mr-1.5 h-3.5 w-3.5" />
+              Pay Now ({formatCurrency(invoice.outstandingBalance)})
+            </Button>
+          )}
+
+          <Button variant="outline" size="sm" onClick={() => window.print()} className="text-xs">
+            <Printer className="mr-1.5 h-3.5 w-3.5" />
+            Print / Save PDF
+          </Button>
+        </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-slate-200 shadow-xs p-8 max-w-4xl mx-auto space-y-8 print:border-none print:shadow-none print:p-0">
+      {/* Online Payment Callout Banner if Unpaid */}
+      {isOutstanding && (
+        <div className="p-4 rounded-xl bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:hidden">
+          <div className="flex items-start gap-3">
+            <div className="h-9 w-9 rounded-full bg-indigo-600 text-white flex items-center justify-center shrink-0">
+              <CreditCard className="h-5 w-5" />
+            </div>
+            <div>
+              <h4 className="text-sm font-bold text-slate-900">
+                Payment Due: {formatCurrency(invoice.outstandingBalance)}
+              </h4>
+              <p className="text-xs text-slate-600">
+                Due by <strong>{formatDate(invoice.dueDate)}</strong>. Pay online via Credit/Debit Card, UPI, or Net Banking.
+              </p>
+            </div>
+          </div>
+
+          <Button
+            className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-5 cursor-pointer text-xs"
+            onClick={() => {
+              setAmount(Number(invoice.outstandingBalance));
+              setTransactionRef(`TXN-${Date.now().toString().slice(-6)}`);
+              setIsPayModalOpen(true);
+            }}
+          >
+            Pay {formatCurrency(invoice.outstandingBalance)}
+          </Button>
+        </div>
+      )}
+
+      {/* Printable Invoice Card */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-xs p-8 max-w-4xl mx-auto space-y-8 print:border-none print:shadow-none print:p-0">
         <div className="flex flex-col sm:flex-row justify-between items-start gap-4 pb-6 border-b border-slate-200">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <div className="h-9 w-9 rounded-md bg-blue-600 flex items-center justify-center text-white font-bold text-lg">
+              <div className="h-9 w-9 rounded-md bg-indigo-600 flex items-center justify-center text-white font-bold text-lg">
                 B
               </div>
               <div>
@@ -91,7 +188,7 @@ export default function CustomerInvoiceDetailPage({
             <h2 className="text-2xl font-extrabold text-slate-900 uppercase tracking-tight">
               INVOICE
             </h2>
-            <div className="text-base font-bold text-blue-600">{invoice.invoiceNumber}</div>
+            <div className="text-base font-bold text-indigo-600">{invoice.invoiceNumber}</div>
             <div className="pt-1">
               <StatusBadge status={invoice.status} />
             </div>
@@ -137,11 +234,11 @@ export default function CustomerInvoiceDetailPage({
             <tbody className="divide-y divide-slate-100 text-slate-700">
               {invoice.items?.map((item: any) => (
                 <tr key={item.id}>
-                  <td className="py-3 px-4 font-semibold text-slate-900">{item.description}</td>
+                  <td className="py-3 px-4 font-semibold text-slate-900">{item.productName || item.description}</td>
                   <td className="py-3 px-4 text-center">{item.quantity}</td>
                   <td className="py-3 px-4 text-right">{formatCurrency(item.unitPrice)}</td>
                   <td className="py-3 px-4 text-right text-slate-500">{formatCurrency(item.taxAmount)}</td>
-                  <td className="py-3 px-4 text-right font-bold text-slate-900">{formatCurrency(item.lineTotal)}</td>
+                  <td className="py-3 px-4 text-right font-bold text-slate-900">{formatCurrency(item.totalAmount || item.lineSubtotal)}</td>
                 </tr>
               ))}
             </tbody>
@@ -183,6 +280,93 @@ export default function CustomerInvoiceDetailPage({
           </div>
         </div>
       </div>
+
+      {/* Customer Checkout Modal */}
+      <Modal
+        isOpen={isPayModalOpen}
+        onClose={() => setIsPayModalOpen(false)}
+        title="Pay Invoice Online"
+        description={`Secure checkout for invoice ${invoice.invoiceNumber}`}
+        maxWidth="max-w-md"
+      >
+        <form onSubmit={handlePayment} className="space-y-4">
+          <div className="p-3.5 rounded-xl bg-indigo-50/60 border border-indigo-100 text-xs space-y-1.5">
+            <div className="flex justify-between">
+              <span className="text-slate-500">Invoice Total:</span>
+              <span className="font-bold text-slate-900">{formatCurrency(invoice.grandTotal)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-500">Amount Paid:</span>
+              <span className="font-bold text-emerald-600">{formatCurrency(invoice.amountPaid)}</span>
+            </div>
+            <div className="flex justify-between pt-1.5 border-t border-indigo-200/60 font-bold">
+              <span className="text-indigo-900">Remaining Balance:</span>
+              <span className="text-red-600 text-sm">{formatCurrency(invoice.outstandingBalance)}</span>
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="payAmtDetail">Payment Amount (₹) *</Label>
+            <Input
+              id="payAmtDetail"
+              type="number"
+              step="0.01"
+              min="0.01"
+              max={Number(invoice.outstandingBalance)}
+              value={amount}
+              onChange={(e) => setAmount(parseFloat(e.target.value) || 0)}
+              required
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="payMethodDetail">Payment Method *</Label>
+            <Select
+              id="payMethodDetail"
+              value={paymentMethod}
+              onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
+            >
+              <option value={PaymentMethod.CARD}>Credit / Debit Card (Stripe Checkout)</option>
+              <option value={PaymentMethod.UPI}>UPI (Google Pay, PhonePe, Paytm)</option>
+              <option value={PaymentMethod.BANK_TRANSFER}>Net Banking / NEFT</option>
+              <option value={PaymentMethod.OTHER}>PayPal</option>
+            </Select>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="payRefDetail">Reference / Card Last 4</Label>
+            <Input
+              id="payRefDetail"
+              value={transactionRef}
+              onChange={(e) => setTransactionRef(e.target.value)}
+              placeholder="e.g. TXN-102938"
+            />
+          </div>
+
+          <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-[11px] text-slate-500 flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4 text-emerald-600 shrink-0" />
+            <span>Encrypted checkout. Reconciled immediately on company records.</span>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsPayModalOpen(false)}
+              disabled={submitting}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={submitting}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold cursor-pointer"
+            >
+              {submitting ? 'Confirming...' : `Pay ${formatCurrency(amount)}`}
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }
