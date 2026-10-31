@@ -2,26 +2,26 @@
 
 @layer base {
   :root {
-    --background: #edf0f7;
+    --background: #f8fafc;
     --foreground: #0f172a;
     --card: #ffffff;
     --card-foreground: #0f172a;
     --popover: #ffffff;
     --popover-foreground: #0f172a;
-    --primary: #5b52f9;
+    --primary: #2563eb;
     --primary-foreground: #ffffff;
     --secondary: #f1f5f9;
     --secondary-foreground: #1e293b;
     --muted: #f8fafc;
     --muted-foreground: #64748b;
-    --accent: #eef2ff;
-    --accent-foreground: #4338ca;
+    --accent: #eff6ff;
+    --accent-foreground: #1d4ed8;
     --destructive: #dc2626;
     --destructive-foreground: #ffffff;
     --border: #e2e8f0;
-    --input: #e2e8f0;
-    --ring: #5b52f9;
-    --radius: 0.75rem;
+    --input: #cbd5e1;
+    --ring: #2563eb;
+    --radius: 0.5rem;
   }
 }
 
@@ -32,7 +32,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Custom scrollbars for data tables and dark cards */
+/* Subtle, functional scrollbars for data tables and sidebars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -42,16 +42,8 @@ body {
 }
 ::-webkit-scrollbar-thumb {
   background: #cbd5e1;
-  border-radius: 9999px;
+  border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
-}
-
-/* Dark theme scrollbar */
-.dark-scrollbar::-webkit-scrollbar-thumb {
-  background: #333658;
-}
-.dark-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #4f5382;
 }
