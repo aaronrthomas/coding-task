@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/auth';
-import { Sidebar } from '@/components/layout/sidebar';
-import { Topbar } from '@/components/layout/topbar';
+import { FinnovaNavbar } from '@/components/layout/finnova-navbar';
 import { Role } from '@prisma/client';
 
 export default async function AdminLayout({
@@ -21,11 +20,11 @@ export default async function AdminLayout({
   }
 
   return (
-    <div className="min-h-screen flex bg-slate-50">
-      <Sidebar user={session} />
-      <div className="flex-1 flex flex-col min-w-0">
-        <Topbar user={session} />
-        <main className="flex-1 p-6 md:p-8 max-w-7xl w-full mx-auto">
+    <div className="min-h-screen bg-[#edf0f7] text-slate-800 p-2.5 sm:p-4 md:p-6 lg:p-7 flex flex-col justify-start">
+      {/* Signature Finnova Outer Container Card */}
+      <div className="bg-white rounded-3xl md:rounded-[32px] shadow-xl shadow-slate-200/60 border border-slate-200/80 p-4 sm:p-6 md:p-8 flex flex-col min-h-[95vh] max-w-[1740px] mx-auto w-full transition-all">
+        <FinnovaNavbar user={session} />
+        <main className="flex-1 w-full">
           {children}
         </main>
       </div>
