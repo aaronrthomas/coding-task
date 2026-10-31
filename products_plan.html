@@ -1,0 +1,879 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>Brightloop: Products and plans</title>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+    />
+    <style>
+      :root {
+        --bg: #f2f4f3;
+        --sf: #fff;
+        --ink: #16221f;
+        --mut: #5f6f6a;
+        --ln: #d9e0dd;
+        --ac: #0e6b57;
+        --ac2: #e3f1ed;
+        --wa: #a35a00;
+        --wa2: #fbeed9;
+        --er: #a8321f;
+        --er2: #f9e4e0;
+        --gr: #e8ecea;
+        box-sizing: border-box;
+        padding-top: env(safe-area-inset-top, 0px);
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+          --bg: #101715;
+          --sf: #18221f;
+          --ink: #e6efec;
+          --mut: #93a39e;
+          --ln: #2b3935;
+          --ac: #4cc3a6;
+          --ac2: #18332d;
+          --wa: #e8a54a;
+          --wa2: #35290f;
+          --er: #f08a78;
+          --er2: #3a1e19;
+          --gr: #25302d;
+          color-scheme: dark;
+        }
+      }
+      :root[data-theme="dark"] {
+        --bg: #101715;
+        --sf: #18221f;
+        --ink: #e6efec;
+        --mut: #93a39e;
+        --ln: #2b3935;
+        --ac: #4cc3a6;
+        --ac2: #18332d;
+        --wa: #e8a54a;
+        --wa2: #35290f;
+        --er: #f08a78;
+        --er2: #3a1e19;
+        --gr: #25302d;
+        color-scheme: dark;
+      }
+      html {
+        scroll-padding-top: env(safe-area-inset-top, 0px);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font:
+          15px/1.5 "IBM Plex Sans",
+          system-ui,
+          sans-serif;
+      }
+      main {
+        max-width: 1080px;
+        margin: 0 auto;
+        padding: 24px 16px 64px;
+      }
+      h1 {
+        font-size: 24px;
+        margin: 0 0 2px;
+        font-weight: 600;
+      }
+      .sub {
+        color: var(--mut);
+        margin: 0 0 20px;
+      }
+      .tabs {
+        display: flex;
+        gap: 4px;
+        border-bottom: 1px solid var(--ln);
+        margin-bottom: 16px;
+      }
+      .tab {
+        background: none;
+        border: 0;
+        padding: 10px 16px;
+        font: inherit;
+        color: var(--mut);
+        cursor: pointer;
+        border-bottom: 3px solid transparent;
+        margin-bottom: -1px;
+      }
+      .tab[aria-selected="true"] {
+        color: var(--ink);
+        border-color: var(--ac);
+        font-weight: 600;
+      }
+      .bar {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 12px;
+      }
+      input,
+      select,
+      textarea {
+        font: inherit;
+        color: var(--ink);
+        background: var(--sf);
+        border: 1px solid var(--ln);
+        border-radius: 6px;
+        padding: 8px 10px;
+        width: 100%;
+      }
+      .bar input {
+        flex: 1;
+        min-width: 160px;
+        width: auto;
+      }
+      .bar select {
+        width: auto;
+      }
+      :focus-visible {
+        outline: 2px solid var(--ac);
+        outline-offset: 2px;
+      }
+      button.b {
+        font: inherit;
+        border: 1px solid var(--ln);
+        background: var(--sf);
+        color: var(--ink);
+        padding: 7px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+      button.b:hover {
+        background: var(--gr);
+      }
+      button.p {
+        background: var(--ac);
+        border-color: var(--ac);
+        color: #fff;
+      }
+      button.p:hover {
+        background: var(--ac);
+        filter: brightness(1.1);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) button.p {
+          color: #06231c;
+        }
+      }
+      button.d {
+        color: var(--er);
+      }
+      .tw {
+        overflow-x: auto;
+        background: var(--sf);
+        border: 1px solid var(--ln);
+        border-radius: 8px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 720px;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--ln);
+        vertical-align: middle;
+      }
+      th {
+        font-weight: 500;
+        color: var(--mut);
+        font-size: 13px;
+      }
+      tr:last-child td {
+        border: 0;
+      }
+      td.n,
+      th.n {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+      }
+      .nm {
+        font-weight: 600;
+        background: none;
+        border: 0;
+        padding: 0;
+        color: var(--ink);
+        cursor: pointer;
+        font-family: inherit;
+        font-size: inherit;
+        text-align: left;
+      }
+      .nm:hover {
+        color: var(--ac);
+        text-decoration: underline;
+      }
+      .tag {
+        display: inline-block;
+        padding: 1px 9px;
+        border-radius: 99px;
+        font-size: 12.5px;
+        background: var(--gr);
+        color: var(--mut);
+      }
+      .tag.Active {
+        background: var(--ac2);
+        color: var(--ac);
+      }
+      .tag.Paused {
+        background: var(--wa2);
+        color: var(--wa);
+      }
+      .tag.Closed,
+      .tag.Inactive {
+        background: var(--er2);
+        color: var(--er);
+      }
+      .acts {
+        display: flex;
+        gap: 6px;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+      }
+      .acts .b {
+        padding: 4px 9px;
+        font-size: 13px;
+      }
+      .empty {
+        padding: 32px;
+        text-align: center;
+        color: var(--mut);
+      }
+      dialog {
+        border: 1px solid var(--ln);
+        border-radius: 10px;
+        background: var(--sf);
+        color: var(--ink);
+        padding: 0;
+        width: min(600px, 94vw);
+        max-height: 92vh;
+      }
+      dialog::backdrop {
+        background: rgba(0, 0, 0, 0.4);
+      }
+      dialog form,
+      .dv {
+        padding: 20px;
+        display: grid;
+        gap: 12px;
+      }
+      dialog h2 {
+        margin: 0;
+        font-size: 18px;
+      }
+      .g2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      @media (max-width: 520px) {
+        .g2 {
+          grid-template-columns: 1fr;
+        }
+      }
+      label {
+        display: grid;
+        gap: 4px;
+        font-size: 13px;
+        color: var(--mut);
+      }
+      .chk {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--ink);
+        font-size: 14px;
+      }
+      .chk input {
+        width: auto;
+      }
+      .err {
+        color: var(--er);
+        font-size: 13px;
+        min-height: 18px;
+      }
+      .vr {
+        display: grid;
+        grid-template-columns: 1fr 1fr 110px auto;
+        gap: 6px;
+        margin-bottom: 6px;
+      }
+      fieldset {
+        border: 1px solid var(--ln);
+        border-radius: 8px;
+        padding: 10px 12px;
+        margin: 0;
+      }
+      legend {
+        font-size: 13px;
+        color: var(--mut);
+        padding: 0 6px;
+      }
+      .foot {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+      }
+      .kv {
+        display: grid;
+        grid-template-columns: 140px 1fr;
+        gap: 6px 12px;
+        margin: 0;
+      }
+      .kv dt {
+        color: var(--mut);
+      }
+      .kv dd {
+        margin: 0;
+      }
+      .log {
+        margin: 0;
+        padding-left: 18px;
+        color: var(--mut);
+        font-size: 13px;
+      }
+      #toast {
+        position: fixed;
+        left: 50%;
+        bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+        transform: translateX(-50%);
+        background: var(--ink);
+        color: var(--bg);
+        padding: 9px 16px;
+        border-radius: 8px;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s;
+      }
+      #toast.on {
+        opacity: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Products and plans</h1>
+      <p class="sub">
+        Set up what Brightloop sells and how it bills. Changes are saved in this
+        browser.
+      </p>
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" id="t-products" aria-selected="true">
+          Products
+        </button>
+        <button class="tab" role="tab" id="t-plans" aria-selected="false">
+          Plans
+        </button>
+      </div>
+      <div id="view"></div>
+    </main>
+    <dialog id="dlg"></dialog>
+    <div id="toast" role="status"></div>
+    <script>
+      const $ = (s) => document.querySelector(s);
+      const esc = (s) =>
+        String(s ?? "").replace(
+          /[&<>"]/g,
+          (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
+        );
+      const inr = (n) => "₹" + Number(n || 0).toLocaleString("en-IN");
+      const today = () => new Date().toISOString().slice(0, 10);
+      const PERIODS = ["Daily", "Weekly", "Monthly", "Yearly"];
+      const TYPES = ["Software", "Add-on", "Service", "Goods"];
+      const KEY = "brightloop-pp-v1";
+      let S;
+      function seed() {
+        const y = new Date().getFullYear();
+        return {
+          pid: 3,
+          lid: 4,
+          tab: "products",
+          products: [
+            {
+              id: 1,
+              name: "Brightloop CRM",
+              type: "Software",
+              sales: 2400,
+              cost: 900,
+              notes: "Core CRM suite, per seat.",
+              active: true,
+              variants: [
+                { attr: "Brand", value: "Odoo", extra: 560 },
+                { attr: "Brand", value: "Zoho", extra: 320 },
+              ],
+            },
+            {
+              id: 2,
+              name: "Priority Support",
+              type: "Add-on",
+              sales: 800,
+              cost: 350,
+              notes: "24x7 support add-on.",
+              active: true,
+              variants: [],
+            },
+          ],
+          plans: [
+            {
+              id: 1,
+              name: "CRM Monthly",
+              productId: 1,
+              price: 2400,
+              period: "Monthly",
+              minQty: 1,
+              from: y + "-01-01",
+              to: "",
+              autoClose: false,
+              allowClose: true,
+              allowPause: true,
+              allowRenew: true,
+              status: "Active",
+              log: ["Created"],
+            },
+            {
+              id: 2,
+              name: "CRM Yearly Contract",
+              productId: 1,
+              price: 24000,
+              period: "Yearly",
+              minQty: 5,
+              from: y + "-01-01",
+              to: y + "-12-31",
+              autoClose: true,
+              allowClose: true,
+              allowPause: false,
+              allowRenew: true,
+              status: "Active",
+              log: ["Created"],
+            },
+            {
+              id: 3,
+              name: "Support Launch Offer",
+              productId: 2,
+              price: 600,
+              period: "Monthly",
+              minQty: 1,
+              from: y - 1 + "-06-01",
+              to: y - 1 + "-12-31",
+              autoClose: true,
+              allowClose: false,
+              allowPause: true,
+              allowRenew: true,
+              status: "Active",
+              log: ["Created"],
+            },
+          ],
+        };
+      }
+      try {
+        S = JSON.parse(localStorage.getItem(KEY));
+      } catch (e) {}
+      if (!S || !S.products) S = seed();
+      function save() {
+        try {
+          localStorage.setItem(KEY, JSON.stringify(S));
+        } catch (e) {}
+      }
+      function toast(m) {
+        const t = $("#toast");
+        t.textContent = m;
+        t.classList.add("on");
+        clearTimeout(toast.t);
+        toast.t = setTimeout(() => t.classList.remove("on"), 2200);
+      }
+      function autoClose() {
+        let n = 0;
+        S.plans.forEach((p) => {
+          if (p.autoClose && p.to && p.to < today() && p.status !== "Closed") {
+            p.status = "Closed";
+            p.log.push(today() + ": Auto-closed at end date");
+            n++;
+          }
+        });
+        if (n) {
+          save();
+          toast(n + " plan(s) closed automatically");
+        }
+      }
+      const prod = (id) => S.products.find((p) => p.id == id);
+      const plan = (id) => S.plans.find((p) => p.id == id);
+
+      function render() {
+        autoClose();
+        ["products", "plans"].forEach((t) =>
+          $("#t-" + t).setAttribute("aria-selected", S.tab === t),
+        );
+        S.tab === "products" ? renderProducts() : renderPlans();
+      }
+      let q = "",
+        f = "all";
+      function renderProducts() {
+        const rows = S.products.filter(
+          (p) =>
+            (f === "all" || (f === "active") === p.active) &&
+            (p.name + p.type).toLowerCase().includes(q.toLowerCase()),
+        );
+        $("#view").innerHTML =
+          `<div class="bar"><input id="q" placeholder="Search products" value="${esc(q)}"><select id="f"><option value="all">All</option><option value="active"${f === "active" ? " selected" : ""}>Active</option><option value="inactive"${f === "inactive" ? " selected" : ""}>Inactive</option></select><button class="b p" id="add">New product</button></div>
+ <div class="tw">${rows.length ? `<table><thead><tr><th>Name</th><th>Type</th><th class="n">Sales price</th><th class="n">Cost price</th><th>Variants</th><th>Status</th><th></th></tr></thead><tbody>${rows.map((p) => `<tr><td><button class="nm" data-v="${p.id}">${esc(p.name)}</button></td><td>${esc(p.type)}</td><td class="n">${inr(p.sales)}</td><td class="n">${inr(p.cost)}</td><td>${p.variants.length || "None"}</td><td><span class="tag ${p.active ? "Active" : "Inactive"}">${p.active ? "Active" : "Inactive"}</span></td><td><div class="acts"><button class="b" data-e="${p.id}">Edit</button><button class="b ${p.active ? "d" : ""}" data-t="${p.id}">${p.active ? "Deactivate" : "Activate"}</button></div></td></tr>`).join("")}</tbody></table>` : `<div class="empty">No products match. Create one with New product.</div>`}</div>`;
+        $("#q").oninput = (e) => {
+          q = e.target.value;
+          renderProducts();
+          const i = $("#q");
+          i.focus();
+          i.setSelectionRange(q.length, q.length);
+        };
+        $("#f").onchange = (e) => {
+          f = e.target.value;
+          renderProducts();
+        };
+        $("#add").onclick = () => productForm();
+        document
+          .querySelectorAll("[data-e]")
+          .forEach((b) => (b.onclick = () => productForm(prod(b.dataset.e))));
+        document
+          .querySelectorAll("[data-v]")
+          .forEach((b) => (b.onclick = () => productView(prod(b.dataset.v))));
+        document.querySelectorAll("[data-t]").forEach(
+          (b) =>
+            (b.onclick = () => {
+              const p = prod(b.dataset.t);
+              if (p.active) {
+                const n = S.plans.filter(
+                  (l) => l.productId == p.id && l.status !== "Closed",
+                ).length;
+                if (
+                  n &&
+                  !confirm(
+                    p.name +
+                      " has " +
+                      n +
+                      " open plan(s). Deactivate anyway? Existing plans keep running, but the product cannot be used in new plans.",
+                  )
+                )
+                  return;
+              }
+              p.active = !p.active;
+              save();
+              toast(p.active ? "Product activated" : "Product deactivated");
+              render();
+            }),
+        );
+      }
+      function productView(p) {
+        const used = S.plans.filter((l) => l.productId == p.id);
+        openDlg(`<div class="dv"><h2>${esc(p.name)} <span class="tag ${p.active ? "Active" : "Inactive"}">${p.active ? "Active" : "Inactive"}</span></h2>
+ <dl class="kv"><dt>Type</dt><dd>${esc(p.type)}</dd><dt>Sales price</dt><dd>${inr(p.sales)}</dd><dt>Cost price</dt><dd>${inr(p.cost)} (margin ${inr(p.sales - p.cost)})</dd><dt>Notes</dt><dd>${esc(p.notes) || "None"}</dd>
+ <dt>Variants</dt><dd>${p.variants.length ? p.variants.map((v) => `${esc(v.attr)}: ${esc(v.value)} adds ${inr(v.extra)}, so ${inr(+p.sales + +v.extra)}`).join("<br>") : "None"}</dd>
+ <dt>Plans</dt><dd>${used.length ? used.map((l) => esc(l.name) + " (" + l.status + ")").join("<br>") : "Not used in any plan yet"}</dd></dl>
+ <div class="foot"><button class="b" value="x">Close</button></div></div>`);
+      }
+      function varRow(v = {}) {
+        return `<div class="vr"><input placeholder="Attribute (Brand)" value="${esc(v.attr)}" data-k="attr"><input placeholder="Value (Odoo)" value="${esc(v.value)}" data-k="value"><input type="number" min="0" step="1" placeholder="Extra ₹" value="${v.extra ?? ""}" data-k="extra"><button type="button" class="b d" aria-label="Remove variant">Remove</button></div>`;
+      }
+      function productForm(p) {
+        const n = p || {
+          name: "",
+          type: "Software",
+          sales: "",
+          cost: "",
+          notes: "",
+          variants: [],
+          active: true,
+        };
+        openDlg(`<form method="dialog"><h2>${p ? "Edit product" : "New product"}</h2>
+ <label>Name<input id="pn" value="${esc(n.name)}"></label>
+ <div class="g2"><label>Type<select id="pt">${TYPES.map((t) => `<option${t === n.type ? " selected" : ""}>${t}</option>`).join("")}</select></label><span></span>
+ <label>Sales price (₹)<input id="ps" type="number" min="0" step="1" value="${n.sales}"></label>
+ <label>Cost price (₹)<input id="pc" type="number" min="0" step="1" value="${n.cost}"></label></div>
+ <label>Notes<textarea id="po" rows="2">${esc(n.notes)}</textarea></label>
+ <fieldset><legend>Variants with additional price</legend><div id="vs">${n.variants.map(varRow).join("")}</div><button type="button" class="b" id="av">Add variant</button></fieldset>
+ <div class="err" id="er"></div><div class="foot"><button class="b" value="x" formnovalidate>Cancel</button><button class="b p" id="sv" type="button">Save product</button></div></form>`);
+        const bind = () =>
+          document
+            .querySelectorAll(".vr .d")
+            .forEach((b) => (b.onclick = () => b.parentElement.remove()));
+        bind();
+        $("#av").onclick = () => {
+          $("#vs").insertAdjacentHTML("beforeend", varRow());
+          bind();
+        };
+        $("#sv").onclick = () => {
+          const name = $("#pn").value.trim(),
+            sales = $("#ps").value,
+            cost = $("#pc").value,
+            err = (m) => ($("#er").textContent = m);
+          const vars = [...document.querySelectorAll(".vr")]
+            .map((r) => ({
+              attr: r.querySelector("[data-k=attr]").value.trim(),
+              value: r.querySelector("[data-k=value]").value.trim(),
+              extra: r.querySelector("[data-k=extra]").value,
+            }))
+            .filter((v) => v.attr || v.value || v.extra !== "");
+          if (!name) return err("Enter a product name.");
+          if (
+            S.products.some(
+              (x) =>
+                x.id !== n.id && x.name.toLowerCase() === name.toLowerCase(),
+            )
+          )
+            return err("A product with this name already exists.");
+          if (sales === "" || +sales < 0)
+            return err("Enter a sales price of 0 or more.");
+          if (cost === "" || +cost < 0)
+            return err("Enter a cost price of 0 or more.");
+          if (
+            vars.some(
+              (v) => !v.attr || !v.value || v.extra === "" || +v.extra < 0,
+            )
+          )
+            return err(
+              "Each variant needs an attribute, a value and an extra price of 0 or more.",
+            );
+          const d = {
+            name,
+            type: $("#pt").value,
+            sales: +sales,
+            cost: +cost,
+            notes: $("#po").value.trim(),
+            variants: vars.map((v) => ({ ...v, extra: +v.extra })),
+          };
+          if (p) Object.assign(p, d);
+          else S.products.push({ id: S.pid++, active: true, ...d });
+          save();
+          $("#dlg").close();
+          toast("Product saved");
+          render();
+        };
+      }
+
+      let pq = "",
+        ps = "all";
+      function renderPlans() {
+        const rows = S.plans.filter(
+          (l) =>
+            (ps === "all" || l.status === ps) &&
+            l.name.toLowerCase().includes(pq.toLowerCase()),
+        );
+        $("#view").innerHTML =
+          `<div class="bar"><input id="q" placeholder="Search plans" value="${esc(pq)}"><select id="f"><option value="all">All statuses</option>${["Active", "Paused", "Closed"].map((s) => `<option${ps === s ? " selected" : ""}>${s}</option>`).join("")}</select><button class="b p" id="add">New plan</button></div>
+ <div class="tw">${
+   rows.length
+     ? `<table><thead><tr><th>Plan</th><th>Product</th><th class="n">Price</th><th>Billing</th><th class="n">Min qty</th><th>Available</th><th>Status</th><th></th></tr></thead><tbody>${rows
+         .map((l) => {
+           const pr = prod(l.productId);
+           return `<tr><td><button class="nm" data-v="${l.id}">${esc(l.name)}</button></td><td>${esc(pr ? pr.name : "Removed")}</td><td class="n">${inr(l.price)}</td><td>${l.period}</td><td class="n">${l.minQty}</td><td>${l.from || "Any"} to ${l.to || "open"}</td><td><span class="tag ${l.status}">${l.status}</span></td><td><div class="acts">${actions(l)}</div></td></tr>`;
+         })
+         .join("")}</tbody></table>`
+     : `<div class="empty">No plans match. Create one with New plan.</div>`
+ }</div>`;
+        $("#q").oninput = (e) => {
+          pq = e.target.value;
+          renderPlans();
+          const i = $("#q");
+          i.focus();
+          i.setSelectionRange(pq.length, pq.length);
+        };
+        $("#f").onchange = (e) => {
+          ps = e.target.value;
+          renderPlans();
+        };
+        $("#add").onclick = () => planForm();
+        document
+          .querySelectorAll("[data-v]")
+          .forEach((b) => (b.onclick = () => planView(plan(b.dataset.v))));
+        document
+          .querySelectorAll("[data-a]")
+          .forEach(
+            (b) => (b.onclick = () => act(plan(b.dataset.id), b.dataset.a)),
+          );
+      }
+      function actions(l) {
+        const a = [
+          `<button class="b" data-a="edit" data-id="${l.id}">Edit</button>`,
+        ];
+        if (l.status === "Active" && l.allowPause)
+          a.push(
+            `<button class="b" data-a="pause" data-id="${l.id}">Pause</button>`,
+          );
+        if (l.status === "Paused")
+          a.push(
+            `<button class="b" data-a="resume" data-id="${l.id}">Resume</button>`,
+          );
+        if (l.allowRenew)
+          a.push(
+            `<button class="b" data-a="renew" data-id="${l.id}">Renew</button>`,
+          );
+        if (l.status !== "Closed" && l.allowClose)
+          a.push(
+            `<button class="b d" data-a="close" data-id="${l.id}">Close early</button>`,
+          );
+        return a.join("");
+      }
+      function act(l, a) {
+        const log = (m) => {
+          l.log.push(today() + ": " + m);
+          save();
+          render();
+        };
+        if (a === "edit") return planForm(l);
+        if (a === "pause") {
+          l.status = "Paused";
+          toast("Plan paused");
+          return log("Paused");
+        }
+        if (a === "resume") {
+          l.status = "Active";
+          toast("Plan resumed");
+          return log("Resumed");
+        }
+        if (a === "close") {
+          if (
+            !confirm(
+              "Close " +
+                l.name +
+                " now? It will stop being offered to new subscriptions.",
+            )
+          )
+            return;
+          l.status = "Closed";
+          toast("Plan closed");
+          return log("Closed early");
+        }
+        if (a === "renew") {
+          const base = l.to && l.to > today() ? l.to : today(),
+            d = new Date(base);
+          d.setFullYear(d.getFullYear() + 1);
+          openDlg(
+            `<form method="dialog"><h2>Renew ${esc(l.name)}</h2><label>New availability end date<input type="date" id="rd" value="${d.toISOString().slice(0, 10)}"></label><div class="err" id="er"></div><div class="foot"><button class="b" value="x" formnovalidate>Cancel</button><button class="b p" type="button" id="rv">Renew plan</button></div></form>`,
+          );
+          $("#rv").onclick = () => {
+            const v = $("#rd").value;
+            if (!v || v <= today())
+              return ($("#er").textContent = "Choose an end date after today.");
+            l.to = v;
+            l.status = "Active";
+            $("#dlg").close();
+            toast("Plan renewed");
+            log("Renewed until " + v);
+          };
+        }
+      }
+      function planView(l) {
+        const pr = prod(l.productId);
+        openDlg(`<div class="dv"><h2>${esc(l.name)} <span class="tag ${l.status}">${l.status}</span></h2>
+ <dl class="kv"><dt>Product</dt><dd>${esc(pr ? pr.name : "Removed")}</dd><dt>Price</dt><dd>${inr(l.price)} billed ${l.period.toLowerCase()}</dd><dt>Minimum quantity</dt><dd>${l.minQty}</dd><dt>Available</dt><dd>${l.from || "Any date"} to ${l.to || "no end date"}</dd>
+ <dt>Rules</dt><dd>${[l.autoClose && "Closes automatically at end date", l.allowClose && "Can be closed early", l.allowPause && "Can be paused", l.allowRenew && "Can be renewed"].filter(Boolean).join("<br>") || "None"}</dd>
+ ${pr && pr.variants.length ? `<dt>Price by variant</dt><dd>${pr.variants.map((v) => `${esc(v.value)}: ${inr(+l.price + +v.extra)}`).join("<br>")}</dd>` : ""}
+ <dt>History</dt><dd><ul class="log">${l.log.map((x) => "<li>" + esc(x) + "</li>").join("")}</ul></dd></dl>
+ <div class="foot"><button class="b" value="x">Close</button></div></div>`);
+      }
+      function planForm(l) {
+        const opts = S.products.filter(
+          (p) => p.active || (l && p.id == l.productId),
+        );
+        if (!opts.length) {
+          toast("Create an active product first");
+          return;
+        }
+        const n = l || {
+          name: "",
+          productId: opts[0].id,
+          price: "",
+          period: "Monthly",
+          minQty: 1,
+          from: today(),
+          to: "",
+          autoClose: false,
+          allowClose: true,
+          allowPause: true,
+          allowRenew: true,
+        };
+        const ck = (id, k, t) =>
+          `<label class="chk"><input type="checkbox" id="${id}"${n[k] ? " checked" : ""}>${t}</label>`;
+        openDlg(`<form method="dialog"><h2>${l ? "Edit plan" : "New plan"}</h2>
+ <label>Plan name<input id="ln" value="${esc(n.name)}"></label>
+ <div class="g2"><label>Product<select id="lp">${opts.map((p) => `<option value="${p.id}"${p.id == n.productId ? " selected" : ""}>${esc(p.name)}</option>`).join("")}</select></label>
+ <label>Billing frequency<select id="lf">${PERIODS.map((p) => `<option${p === n.period ? " selected" : ""}>${p}</option>`).join("")}</select></label>
+ <label>Price per period (₹)<input id="lc" type="number" min="0" value="${n.price}"></label>
+ <label>Minimum quantity<input id="lq" type="number" min="1" step="1" value="${n.minQty}"></label>
+ <label>Available from<input id="lfr" type="date" value="${n.from}"></label>
+ <label>Available until<input id="lto" type="date" value="${n.to}"></label></div>
+ <fieldset><legend>What can happen to this plan</legend>${ck("ac", "autoClose", "Close automatically when the end date passes")}${ck("cl", "allowClose", "Allow closing early")}${ck("pa", "allowPause", "Allow pausing")}${ck("re", "allowRenew", "Allow renewing")}</fieldset>
+ <div class="err" id="er"></div><div class="foot"><button class="b" value="x" formnovalidate>Cancel</button><button class="b p" type="button" id="sv">Save plan</button></div></form>`);
+        $("#sv").onclick = () => {
+          const err = (m) => ($("#er").textContent = m),
+            name = $("#ln").value.trim(),
+            price = $("#lc").value,
+            mq = +$("#lq").value,
+            fr = $("#lfr").value,
+            to = $("#lto").value;
+          if (!name) return err("Enter a plan name.");
+          if (price === "" || +price < 0)
+            return err("Enter a price of 0 or more.");
+          if (!Number.isInteger(mq) || mq < 1)
+            return err("Minimum quantity must be a whole number, 1 or more.");
+          if (fr && to && to < fr)
+            return err("The end date must be on or after the start date.");
+          if ($("#ac").checked && !to)
+            return err("Set an end date, or turn off automatic closing.");
+          const d = {
+            name,
+            productId: +$("#lp").value,
+            period: $("#lf").value,
+            price: +price,
+            minQty: mq,
+            from: fr,
+            to,
+            autoClose: $("#ac").checked,
+            allowClose: $("#cl").checked,
+            allowPause: $("#pa").checked,
+            allowRenew: $("#re").checked,
+          };
+          if (l) {
+            Object.assign(l, d);
+            l.log.push(today() + ": Edited");
+          } else
+            S.plans.push({
+              id: S.lid++,
+              status: "Active",
+              log: [today() + ": Created"],
+              ...d,
+            });
+          save();
+          $("#dlg").close();
+          toast("Plan saved");
+          render();
+        };
+      }
+      function openDlg(h) {
+        const d = $("#dlg");
+        d.innerHTML = h;
+        if (!d.open) d.showModal();
+      }
+      $("#t-products").onclick = () => {
+        S.tab = "products";
+        save();
+        render();
+      };
+      $("#t-plans").onclick = () => {
+        S.tab = "plans";
+        save();
+        render();
+      };
+      render();
+    </script>
+  </body>
+</html>
