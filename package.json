@@ -14,7 +14,7 @@
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
-    "@hookform/resolvers": "^6.0.2",
+    "@hookform/resolvers": "^3.10.0",
     "@prisma/client": "6.19.3",
     "@tanstack/react-table": "^9.3.1",
     "bcryptjs": "^3.0.3",
