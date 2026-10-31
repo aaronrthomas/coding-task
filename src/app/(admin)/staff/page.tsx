@@ -1,20 +1,41 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import Image from 'next/image';
+import {
+  ArrowLeft,
+  UserCog,
+  Plus,
+  ShieldCheck,
+  UserCheck,
+  Check,
+  X,
+  Calendar,
+  Clock,
+  Lock,
+  ArrowUpRight,
+  TrendingUp,
+  TrendingDown,
+  ChevronDown,
+  Search,
+  CheckCircle2,
+} from 'lucide-react';
+import { Role } from '@prisma/client';
+import { formatDate } from '@/lib/utils';
+import { toast } from 'sonner';
+import { Modal } from '@/components/ui/modal';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select } from '@/components/ui/select';
-import { Modal } from '@/components/ui/modal';
-import { formatDate } from '@/lib/utils';
-import { toast } from 'sonner';
-import { UserCog, Plus, ShieldCheck, UserCheck, Check, X } from 'lucide-react';
-import { Role } from '@prisma/client';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 export default function StaffPage() {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [roleFilter, setRoleFilter] = useState('');
+  const [search, setSearch] = useState('');
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -60,7 +81,7 @@ export default function StaffPage() {
   const handleCreateStaff = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isPasswordValid) {
-      toast.error('Password does not meet required complexity standards.');
+      toast.error('Please fulfill all password security rules');
       return;
     }
     setSaving(true);
@@ -72,170 +93,434 @@ export default function StaffPage() {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        toast.success(data.message);
+        toast.success(`User ${name} created with role ${role}`);
         setIsModalOpen(false);
         fetchStaff();
       } else {
-        toast.error(data.error || 'Failed to create account');
+        toast.error(data.error || 'Creation failed');
       }
     } catch {
-      toast.error('Network error creating staff');
+      toast.error('Network error during staff creation');
     } finally {
       setSaving(false);
     }
   };
 
+  const filteredUsers = users.filter((u) => {
+    const matchesSearch =
+      u.name.toLowerCase().includes(search.toLowerCase()) ||
+      u.email.toLowerCase().includes(search.toLowerCase());
+    const matchesRole = roleFilter ? u.role === roleFilter : true;
+    return matchesSearch && matchesRole;
+  });
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2 border-b border-slate-200">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Staff &amp; Role Management</h1>
-          <p className="text-sm text-slate-500">
-            Manage administrative personnel and operational staff roles (Admin Only)
-          </p>
+    <div className="space-y-6 animate-in fade-in duration-300">
+      {/* 1. Subheader: Back Button, Title, Subtitle, and Primary Action Pill */}
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="flex items-center gap-3.5">
+          <Link
+            href="/dashboard"
+            className="h-10 w-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-700 hover:bg-slate-100 transition-all shadow-2xs hover:scale-105"
+            title="Back to Dashboard"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Link>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
+              Staff &amp; RBAC Management
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-400 font-normal mt-0.5">
+              Manage enterprise employees, role privileges, and authentication credentials.
+            </p>
+          </div>
         </div>
 
-        <Button onClick={openCreateModal} className="text-xs">
-          <Plus className="h-4 w-4 mr-1.5" />
-          Create Staff Account
-        </Button>
+        <div className="flex items-center gap-2.5 w-full md:w-auto justify-end">
+          <button
+            onClick={openCreateModal}
+            className="bg-[#5b52f9] hover:bg-[#4d44e8] text-white rounded-full px-5 py-2.5 font-medium shadow-md shadow-indigo-500/25 text-xs sm:text-sm flex items-center gap-2 transition-all hover:scale-105 cursor-pointer"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Add staff member</span>
+          </button>
+        </div>
       </div>
 
-      <Card>
-        <CardContent className="p-0 overflow-x-auto">
+      {/* 2. Signature Finnova 4 KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* KPI 1: Overdue Balance with Desk Image */}
+        <div className="relative overflow-hidden rounded-2xl bg-white border border-slate-100 p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between min-h-[175px]">
+          <div className="relative z-10">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-slate-700">Security Audit</span>
+              <div className="h-5 w-5 rounded-full bg-red-50 border border-red-200 text-red-500 flex items-center justify-center text-xs font-bold">
+                !
+              </div>
+            </div>
+            <div className="text-2xl font-bold text-slate-900 mt-2 tracking-tight">
+              100% Compliant
+            </div>
+            <div className="flex items-center gap-1 text-[11px] font-medium text-emerald-600 mt-1">
+              <CheckCircle2 className="h-3 w-3" />
+              <span>Argon2id password hashes active</span>
+            </div>
+          </div>
+          <div className="absolute right-0 bottom-0 w-36 h-24 opacity-85 pointer-events-none rounded-br-2xl overflow-hidden">
+            <Image
+              src="/finnova-desk.jpg"
+              alt="Office Desk"
+              width={160}
+              height={120}
+              className="object-cover object-center w-full h-full"
+            />
+          </div>
+        </div>
+
+        {/* KPI 2: Due within next month with Vertical Purple Bars */}
+        <div className="rounded-2xl bg-white border border-slate-100 p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between min-h-[175px]">
+          <div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-slate-700">Active Operators</span>
+              <div className="h-6 w-6 rounded-lg bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center">
+                <Calendar className="h-3.5 w-3.5" />
+              </div>
+            </div>
+            <div className="text-2xl font-bold text-slate-900 mt-2 tracking-tight">
+              {users.length} <span className="text-sm font-normal text-slate-500">accounts</span>
+            </div>
+            <div className="flex items-center gap-1 text-[11px] font-medium text-indigo-600 mt-1">
+              <TrendingUp className="h-3 w-3" />
+              <span>Full audit trail logging</span>
+            </div>
+          </div>
+          <div className="flex items-end justify-between gap-1.5 pt-4 h-12">
+            {[
+              { label: 'Jul', h: 'h-4', color: 'bg-indigo-200' },
+              { label: 'Aug', h: 'h-6', color: 'bg-indigo-300' },
+              { label: 'Sep', h: 'h-5', color: 'bg-indigo-300' },
+              { label: 'Oct', h: 'h-7', color: 'bg-indigo-400' },
+              { label: 'Nov', h: 'h-9', color: 'bg-indigo-500' },
+              { label: 'Dec', h: 'h-10', color: 'bg-[#5b52f9]' },
+            ].map((bar, i) => (
+              <div key={i} className="flex flex-col items-center flex-1">
+                <div className={`w-full max-w-[12px] rounded-t-sm ${bar.h} ${bar.color}`} />
+                <span className="text-[9px] text-slate-400 mt-1">{bar.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* KPI 3: Average time to get paid with Sparkline */}
+        <div className="rounded-2xl bg-white border border-slate-100 p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between min-h-[175px]">
+          <div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-slate-700">Role Privilege Level</span>
+              <div className="h-6 w-6 rounded-lg bg-cyan-50 border border-cyan-100 text-cyan-600 flex items-center justify-center">
+                <Clock className="h-3.5 w-3.5" />
+              </div>
+            </div>
+            <div className="text-2xl font-bold text-slate-900 mt-2 tracking-tight">
+              Strict RBAC
+            </div>
+            <div className="flex items-center gap-1 text-[11px] font-medium text-emerald-600 mt-1">
+              <TrendingDown className="h-3 w-3" />
+              <span>Protected routes verified</span>
+            </div>
+          </div>
+          <div className="pt-2 h-10 w-full">
+            <svg viewBox="0 0 160 36" fill="none" className="w-full h-full">
+              <path
+                d="M2 30 C 25 32, 40 24, 60 22 C 80 20, 100 12, 120 10 C 140 8, 150 4, 158 2"
+                stroke="#6366f1"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+              />
+              <circle cx="2" cy="30" r="2.5" fill="#6366f1" />
+              <circle cx="60" cy="22" r="2.5" fill="#6366f1" />
+              <circle cx="120" cy="10" r="2.5" fill="#6366f1" />
+              <circle cx="158" cy="2" r="3" fill="#4f46e5" stroke="#ffffff" strokeWidth="1.5" />
+            </svg>
+          </div>
+        </div>
+
+        {/* KPI 4: Available for Instant Payout with Card Badges */}
+        <div className="rounded-2xl bg-white border border-slate-100 p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between min-h-[175px]">
+          <div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-slate-700">Operator Directory</span>
+              <div className="flex items-center gap-1">
+                <div className="h-6 w-6 rounded-lg bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center">
+                  <Lock className="h-3.5 w-3.5" />
+                </div>
+                <ArrowUpRight className="h-4 w-4 text-slate-400" />
+              </div>
+            </div>
+            <div className="text-2xl font-bold text-slate-900 mt-2 tracking-tight">
+              Brightloop IAM
+            </div>
+            <div className="text-[11px] text-slate-400 font-medium mt-0.5">Enterprise Staff Credentials</div>
+          </div>
+          <div className="flex items-center justify-between gap-1.5 pt-3">
+            <div className="text-[10px] px-2 py-1 rounded-lg bg-slate-50 border border-slate-200/60 font-mono text-slate-600">
+              Admin
+            </div>
+            <div className="text-[10px] px-2 py-1 rounded-lg bg-[#5b52f9] text-white font-mono shadow-xs">
+              Staff
+            </div>
+            <div className="text-[10px] px-2 py-1 rounded-lg bg-slate-50 border border-slate-200/60 font-mono text-slate-600">
+              Customer
+            </div>
+            <button
+              onClick={openCreateModal}
+              className="text-[11px] font-semibold bg-slate-900 text-white rounded-full px-2.5 py-1 hover:bg-slate-800 transition-all cursor-pointer"
+            >
+              Add User
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* 3. Active Filters Pill Row */}
+      <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          <div className="bg-slate-900 text-white px-3.5 py-1.5 rounded-full font-semibold flex items-center gap-1.5 shadow-xs">
+            <span>Active filters</span>
+            <span className="h-4 w-4 rounded-full bg-white/20 text-[10px] flex items-center justify-center">
+              2
+            </span>
+          </div>
+
+          <div className="relative">
+            <select
+              value={roleFilter}
+              onChange={(e) => setRoleFilter(e.target.value)}
+              className="appearance-none bg-white border border-slate-200 rounded-full px-3.5 py-1.5 pr-7 text-xs text-slate-700 shadow-2xs hover:bg-slate-50 cursor-pointer focus:outline-hidden"
+            >
+              <option value="">All user roles</option>
+              <option value="ADMIN">Administrator</option>
+              <option value="STAFF">Staff Operator</option>
+              <option value="CUSTOMER">Customer Account</option>
+            </select>
+            <ChevronDown className="h-3 w-3 text-slate-400 absolute right-2.5 top-2.5 pointer-events-none" />
+          </div>
+
+          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-slate-200 text-slate-700 shadow-2xs">
+            <span>Access Audit Verified</span>
+            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+          </div>
+        </div>
+
+        <div className="relative w-full sm:w-64">
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search staff by name or email"
+            className="rounded-full bg-white border-slate-200 pl-8 pr-4 text-xs h-9 shadow-2xs focus-visible:ring-indigo-500"
+          />
+          <Search className="h-3.5 w-3.5 text-slate-400 absolute left-3 top-2.5" />
+        </div>
+      </div>
+
+      {/* 4. Signature Dark Master Container */}
+      <div className="bg-[#141527] rounded-3xl p-5 md:p-7 text-white shadow-2xl border border-slate-800/80 space-y-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-slate-800/70">
+          <div className="text-base font-bold text-white tracking-wide">
+            Staff Personnel Roster ({users.length})
+          </div>
+
+          <div className="flex items-center bg-[#1d1f36] rounded-full p-1 border border-slate-700/60 shadow-inner">
+            <button
+              onClick={() => setRoleFilter('')}
+              className={cn(
+                'px-3.5 py-1 text-xs font-semibold rounded-full transition-all cursor-pointer',
+                roleFilter === ''
+                  ? 'bg-[#5b52f9] text-white shadow-md'
+                  : 'text-slate-400 hover:text-white'
+              )}
+            >
+              All Personnel
+            </button>
+            <button
+              onClick={() => setRoleFilter('ADMIN')}
+              className={cn(
+                'px-3.5 py-1 text-xs font-semibold rounded-full transition-all cursor-pointer',
+                roleFilter === 'ADMIN'
+                  ? 'bg-[#5b52f9] text-white shadow-md'
+                  : 'text-slate-400 hover:text-white'
+              )}
+            >
+              Admins
+            </button>
+            <button
+              onClick={() => setRoleFilter('STAFF')}
+              className={cn(
+                'px-3.5 py-1 text-xs font-semibold rounded-full transition-all cursor-pointer',
+                roleFilter === 'STAFF'
+                  ? 'bg-[#5b52f9] text-white shadow-md'
+                  : 'text-slate-400 hover:text-white'
+              )}
+            >
+              Staff
+            </button>
+          </div>
+        </div>
+
+        {/* Staff Table */}
+        <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
-              <tr className="bg-slate-50/75 border-b border-slate-200 text-slate-500 uppercase font-semibold">
-                <th className="py-3 px-4">Name</th>
-                <th className="py-3 px-4">Email</th>
-                <th className="py-3 px-4">Role</th>
-                <th className="py-3 px-4">Status</th>
-                <th className="py-3 px-4">Created Date</th>
+              <tr className="border-b border-slate-800/80 text-slate-400 font-semibold uppercase tracking-wider text-[11px]">
+                <th className="py-3 px-4">Operator Name</th>
+                <th className="py-3 px-4">Email Address</th>
+                <th className="py-3 px-4">Role Privileges</th>
+                <th className="py-3 px-4">Registered Date</th>
+                <th className="py-3 px-4 text-right">Account Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 text-slate-700">
+            <tbody className="divide-y divide-slate-800/60 text-slate-300">
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="py-8 text-center text-slate-400">Loading personnel records...</td>
+                  <td colSpan={5} className="py-12 text-center text-slate-500">
+                    Loading personnel...
+                  </td>
                 </tr>
-              ) : users.length === 0 ? (
+              ) : filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-8 text-center text-slate-400">No staff accounts found.</td>
+                  <td colSpan={5} className="py-12 text-center text-slate-500">
+                    No staff records found.
+                  </td>
                 </tr>
               ) : (
-                users.map((u) => (
-                  <tr key={u.id} className="hover:bg-slate-50/80">
-                    <td className="py-3 px-4 font-semibold text-slate-900">{u.name}</td>
-                    <td className="py-3 px-4 text-slate-600">{u.email}</td>
-                    <td className="py-3 px-4">
+                filteredUsers.map((u) => (
+                  <tr key={u.id} className="hover:bg-[#1f2038] transition-colors">
+                    <td className="py-3.5 px-4 font-bold text-white">
+                      <div className="flex items-center gap-2.5">
+                        <div className="h-8 w-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-xs text-indigo-400">
+                          {u.name?.charAt(0) || 'U'}
+                        </div>
+                        <span>{u.name}</span>
+                      </div>
+                    </td>
+                    <td className="py-3.5 px-4 text-slate-300 font-mono">
+                      {u.email}
+                    </td>
+                    <td className="py-3.5 px-4">
                       <span
-                        className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded ${
+                        className={cn(
+                          'inline-block px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase',
                           u.role === 'ADMIN'
-                            ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                            : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                        }`}
-                      >
-                        {u.role === 'ADMIN' ? (
-                          <ShieldCheck className="h-3 w-3" />
-                        ) : (
-                          <UserCheck className="h-3 w-3" />
+                            ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
+                            : u.role === 'STAFF'
+                            ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
+                            : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
                         )}
+                      >
                         {u.role}
                       </span>
                     </td>
-                    <td className="py-3 px-4">
-                      <span className="text-emerald-700 font-semibold text-xs">Active</span>
+                    <td className="py-3.5 px-4 text-slate-400">
+                      {formatDate(u.createdAt)}
                     </td>
-                    <td className="py-3 px-4 text-slate-500">{formatDate(u.createdAt)}</td>
+                    <td className="py-3.5 px-4 text-right">
+                      <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400 font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                        <CheckCircle2 className="h-3 w-3" />
+                        <span>Active</span>
+                      </span>
+                    </td>
                   </tr>
                 ))
               )}
             </tbody>
           </table>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      {/* Add Staff Modal */}
+      {/* Create Modal */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title="Provision New Staff Account"
-        description="Creates an internal operations user with role-based access"
+        title="Provision Staff Operator"
+        description="Create employee credentials with role-based access control and password constraints."
       >
         <form onSubmit={handleCreateStaff} className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="stName">Full Name *</Label>
+            <Label className="text-xs">Full Name *</Label>
             <Input
-              id="stName"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Sarah Jenkins"
+              placeholder="Sarah Miller"
               required
+              className="text-xs"
             />
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="stEmail">Corporate Email *</Label>
+            <Label className="text-xs">Email Address *</Label>
             <Input
-              id="stEmail"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="e.g. sarah@brightloop.com"
+              placeholder="sarah@brightloop.com"
               required
+              className="text-xs"
             />
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="stRole">Assigned Role *</Label>
-            <Select
-              id="stRole"
-              value={role}
-              onChange={(e) => setRole(e.target.value as Role)}
-            >
-              <option value={Role.STAFF}>STAFF (Day-to-day operations &amp; billing)</option>
-              <option value={Role.ADMIN}>ADMIN (Full system &amp; config authority)</option>
-            </Select>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="stPass">Temporary Password *</Label>
+            <Label className="text-xs">Initial Password *</Label>
             <Input
-              id="stPass"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••••••"
+              placeholder="At least 9 characters with upper, lower, and special"
               required
+              className="text-xs"
             />
-
-            <div className="pt-2 p-2.5 rounded bg-slate-50 border border-slate-200 text-xs space-y-1">
-              <div className="font-semibold text-slate-600 mb-1">Complexity Requirements:</div>
-              <div className={`flex items-center gap-1.5 ${hasLength ? 'text-emerald-700' : 'text-slate-500'}`}>
+            {/* Live Password Strength indicator */}
+            <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 space-y-1 text-[11px] text-slate-600 mt-1">
+              <div className="flex items-center gap-1.5">
                 {hasLength ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <X className="h-3.5 w-3.5 text-slate-400" />}
-                <span>More than 8 characters</span>
+                <span>9+ characters length</span>
               </div>
-              <div className={`flex items-center gap-1.5 ${hasUpper ? 'text-emerald-700' : 'text-slate-500'}`}>
+              <div className="flex items-center gap-1.5">
                 {hasUpper ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <X className="h-3.5 w-3.5 text-slate-400" />}
                 <span>At least one uppercase letter (A-Z)</span>
               </div>
-              <div className={`flex items-center gap-1.5 ${hasLower ? 'text-emerald-700' : 'text-slate-500'}`}>
+              <div className="flex items-center gap-1.5">
                 {hasLower ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <X className="h-3.5 w-3.5 text-slate-400" />}
                 <span>At least one lowercase letter (a-z)</span>
               </div>
-              <div className={`flex items-center gap-1.5 ${hasSpecial ? 'text-emerald-700' : 'text-slate-500'}`}>
+              <div className="flex items-center gap-1.5">
                 {hasSpecial ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <X className="h-3.5 w-3.5 text-slate-400" />}
-                <span>At least one special character</span>
+                <span>At least one special character (!@#$...)</span>
               </div>
             </div>
           </div>
 
-          <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
-            <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)} disabled={saving}>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Assigned Role</Label>
+            <Select
+              value={role}
+              onChange={(e) => setRole(e.target.value as Role)}
+              className="text-xs"
+            >
+              <option value={Role.STAFF}>STAFF (Operational Invoicing &amp; CRM)</option>
+              <option value={Role.ADMIN}>ADMIN (Full Configuration &amp; IAM)</option>
+            </Select>
+          </div>
+
+          <div className="pt-3 flex justify-end gap-2 border-t border-slate-100">
+            <Button type="button" variant="outline" size="sm" onClick={() => setIsModalOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={saving || !isPasswordValid}>
-              {saving ? 'Creating Account...' : 'Provision Staff'}
+            <Button
+              type="submit"
+              size="sm"
+              disabled={saving || !isPasswordValid}
+              className="bg-[#5b52f9] hover:bg-[#4d44e8] text-white"
+            >
+              {saving ? 'Creating...' : 'Provision Account'}
             </Button>
           </div>
         </form>

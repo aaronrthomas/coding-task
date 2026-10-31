@@ -118,26 +118,35 @@ export default function SubscriptionDetailPage({
 
   return (
     <div className="space-y-6">
-      {/* Top bar back link & quick actions */}
+      {/* Finnova Top Subheader & Quick Actions */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <Link
-          href="/subscriptions"
-          className="inline-flex items-center text-xs text-slate-500 hover:text-slate-800 font-medium"
-        >
-          <ArrowLeft className="mr-1.5 h-3.5 w-3.5" />
-          Back to Subscriptions
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/subscriptions"
+            className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-700 hover:bg-slate-200 transition-colors shadow-2xs"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Link>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900">
+                Subscription {subscription.subscriptionNumber}
+              </h1>
+              <StatusBadge status={subscription.status} />
+            </div>
+            <p className="text-xs text-slate-400">Contract lifecycle terms, recurring cadence, and auto-generated billing run</p>
+          </div>
+        </div>
 
         {/* Action Controls */}
         <div className="flex flex-wrap items-center gap-2">
-          {/* Trigger billing button */}
           {subscription.status === 'ACTIVE' && (
             <Button
               variant="outline"
               size="sm"
               disabled={billingRunning}
               onClick={handleTriggerBilling}
-              className="text-xs font-semibold text-blue-700 bg-blue-50 border-blue-200 hover:bg-blue-100"
+              className="h-9 px-4 rounded-full text-xs font-semibold text-[#5b52f9] bg-indigo-50/70 border-indigo-200 hover:bg-indigo-100 shadow-2xs"
             >
               <Play className={`mr-1.5 h-3.5 w-3.5 ${billingRunning ? 'animate-spin' : ''}`} />
               {billingRunning ? 'Billing...' : 'Generate Invoice Now'}
@@ -147,7 +156,7 @@ export default function SubscriptionDetailPage({
           {subscription.status === 'CONFIRMED' && (
             <Button
               size="sm"
-              className="text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
+              className="h-9 px-5 rounded-full text-xs bg-[#5b52f9] hover:bg-[#483ef3] text-white font-semibold shadow-md shadow-[#5b52f9]/20"
               onClick={() => handleTransition('ACTIVATE')}
             >
               <Play className="mr-1.5 h-3.5 w-3.5" />
@@ -159,7 +168,7 @@ export default function SubscriptionDetailPage({
             <Button
               variant="outline"
               size="sm"
-              className="text-xs text-amber-700 bg-amber-50 border-amber-200"
+              className="h-9 px-4 rounded-full text-xs text-amber-700 bg-amber-50 border-amber-200 hover:bg-amber-100 shadow-2xs"
               onClick={() => handleTransition('PAUSE')}
             >
               <Pause className="mr-1.5 h-3.5 w-3.5" />
@@ -170,7 +179,7 @@ export default function SubscriptionDetailPage({
           {subscription.status === 'PAUSED' && (
             <Button
               size="sm"
-              className="text-xs bg-blue-600 text-white"
+              className="h-9 px-5 rounded-full text-xs bg-[#5b52f9] hover:bg-[#483ef3] text-white font-semibold shadow-md shadow-[#5b52f9]/20"
               onClick={() => handleTransition('RESUME')}
             >
               <Play className="mr-1.5 h-3.5 w-3.5" />
@@ -182,7 +191,7 @@ export default function SubscriptionDetailPage({
             <Button
               variant="outline"
               size="sm"
-              className="text-xs text-red-600 border-red-200 hover:bg-red-50"
+              className="h-9 px-4 rounded-full text-xs text-red-600 border-red-200 bg-white hover:bg-red-50 shadow-2xs"
               onClick={() => handleTransition('CLOSE')}
             >
               Close Contract
@@ -193,7 +202,7 @@ export default function SubscriptionDetailPage({
             <Button
               variant="outline"
               size="sm"
-              className="text-xs text-emerald-700 bg-emerald-50 border-emerald-200"
+              className="h-9 px-4 rounded-full text-xs text-emerald-700 bg-emerald-50 border-emerald-200 hover:bg-emerald-100 shadow-2xs"
               onClick={() => handleTransition('RENEW')}
             >
               <RotateCcw className="mr-1.5 h-3.5 w-3.5" />

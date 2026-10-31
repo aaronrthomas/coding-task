@@ -101,21 +101,31 @@ export default function CustomerInvoiceDetailPage({
 
   return (
     <div className="space-y-6 pb-12">
-      {/* Navigation & Print Actions */}
-      <div className="flex items-center justify-between print:hidden">
-        <Link
-          href="/portal/invoices"
-          className="inline-flex items-center text-xs text-slate-500 hover:text-slate-800 font-medium"
-        >
-          <ArrowLeft className="mr-1.5 h-3.5 w-3.5" />
-          Back to My Invoices
-        </Link>
+      {/* Finnova Navigation & Actions */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 print:hidden">
+        <div className="flex items-center gap-3">
+          <Link
+            href="/portal/invoices"
+            className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-700 hover:bg-slate-200 transition-colors shadow-2xs"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Link>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900">
+                Invoice {invoice.invoiceNumber}
+              </h1>
+              <StatusBadge status={invoice.status} />
+            </div>
+            <p className="text-xs text-slate-400">Customer billing breakdown and instant online settlement</p>
+          </div>
+        </div>
 
         <div className="flex items-center gap-2">
           {isOutstanding && (
             <Button
               size="sm"
-              className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold cursor-pointer text-xs"
+              className="h-9 px-5 rounded-full bg-[#5b52f9] hover:bg-[#483ef3] text-white font-semibold text-xs shadow-md shadow-[#5b52f9]/20 cursor-pointer"
               onClick={() => {
                 setAmount(Number(invoice.outstandingBalance));
                 setTransactionRef(`TXN-${Date.now().toString().slice(-6)}`);
@@ -127,18 +137,23 @@ export default function CustomerInvoiceDetailPage({
             </Button>
           )}
 
-          <Button variant="outline" size="sm" onClick={() => window.print()} className="text-xs">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.print()}
+            className="h-9 px-4 rounded-full border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs shadow-2xs"
+          >
             <Printer className="mr-1.5 h-3.5 w-3.5" />
-            Print / Save PDF
+            Print / PDF
           </Button>
         </div>
       </div>
 
       {/* Online Payment Callout Banner if Unpaid */}
       {isOutstanding && (
-        <div className="p-4 rounded-xl bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:hidden">
+        <div className="p-5 rounded-2xl bg-gradient-to-r from-indigo-50/80 to-purple-50/80 border border-indigo-100 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:hidden">
           <div className="flex items-start gap-3">
-            <div className="h-9 w-9 rounded-full bg-indigo-600 text-white flex items-center justify-center shrink-0">
+            <div className="h-10 w-10 rounded-full bg-[#5b52f9] text-white flex items-center justify-center shrink-0 shadow-sm shadow-[#5b52f9]/30">
               <CreditCard className="h-5 w-5" />
             </div>
             <div>
@@ -152,7 +167,7 @@ export default function CustomerInvoiceDetailPage({
           </div>
 
           <Button
-            className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-5 cursor-pointer text-xs"
+            className="h-9 px-5 rounded-full bg-[#5b52f9] hover:bg-[#483ef3] text-white font-bold text-xs shadow-md shadow-[#5b52f9]/20 cursor-pointer"
             onClick={() => {
               setAmount(Number(invoice.outstandingBalance));
               setTransactionRef(`TXN-${Date.now().toString().slice(-6)}`);
@@ -165,7 +180,7 @@ export default function CustomerInvoiceDetailPage({
       )}
 
       {/* Printable Invoice Card */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-xs p-8 max-w-4xl mx-auto space-y-8 print:border-none print:shadow-none print:p-0">
+      <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6 sm:p-10 max-w-4xl mx-auto space-y-8 print:border-none print:shadow-none print:p-0">
         <div className="flex flex-col sm:flex-row justify-between items-start gap-4 pb-6 border-b border-slate-200">
           <div>
             <div className="flex items-center gap-2 mb-2">

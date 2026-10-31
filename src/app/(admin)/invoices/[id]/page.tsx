@@ -115,32 +115,42 @@ export default function InvoiceDetailPage({
 
   return (
     <div className="space-y-6">
-      {/* Action Header */}
+      {/* Finnova Action Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 print:hidden">
-        <Link
-          href="/invoices"
-          className="inline-flex items-center text-xs text-slate-500 hover:text-slate-800 font-medium"
-        >
-          <ArrowLeft className="mr-1.5 h-3.5 w-3.5" />
-          Back to Invoices
-        </Link>
-
         <div className="flex items-center gap-3">
+          <Link
+            href="/invoices"
+            className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-700 hover:bg-slate-200 transition-colors shadow-2xs"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Link>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900">
+                Invoice {invoice.invoiceNumber}
+              </h1>
+              <StatusBadge status={invoice.status} />
+            </div>
+            <p className="text-xs text-slate-400">Detailed tax breakdown, item ledger, and payment reconciliation</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
           <Button
             variant="outline"
             size="sm"
             onClick={() => window.print()}
-            className="text-xs"
+            className="h-9 px-4 rounded-full border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs shadow-2xs"
           >
             <Printer className="mr-1.5 h-3.5 w-3.5" />
-            Print / Export PDF
+            Print / PDF
           </Button>
 
           {Number(invoice.outstandingBalance) > 0 && invoice.status !== 'CANCELLED' && (
             <Button
               size="sm"
               onClick={openPaymentModal}
-              className="text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
+              className="h-9 px-5 rounded-full bg-[#5b52f9] hover:bg-[#483ef3] text-white font-semibold text-xs shadow-md shadow-[#5b52f9]/20"
             >
               <CreditCard className="mr-1.5 h-3.5 w-3.5" />
               Record Payment
@@ -150,7 +160,7 @@ export default function InvoiceDetailPage({
       </div>
 
       {/* Printable Invoice Container */}
-      <div className="bg-white rounded-lg border border-slate-200 shadow-xs p-8 max-w-4xl mx-auto space-y-8 print:border-none print:shadow-none print:p-0">
+      <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6 sm:p-10 max-w-4xl mx-auto space-y-8 print:border-none print:shadow-none print:p-0">
         {/* Invoice Top Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start gap-4 pb-6 border-b border-slate-200">
           <div>

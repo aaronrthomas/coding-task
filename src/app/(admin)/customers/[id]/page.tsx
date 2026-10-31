@@ -86,21 +86,35 @@ export default function CustomerDetailPage({
 
   return (
     <div className="space-y-6">
-      {/* Top back navigation */}
-      <div className="flex items-center justify-between">
-        <Link
-          href="/customers"
-          className="inline-flex items-center text-xs text-slate-500 hover:text-slate-800 font-medium"
-        >
-          <ArrowLeft className="mr-1.5 h-3.5 w-3.5" />
-          Back to Customers
-        </Link>
+      {/* Finnova Navigation Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <Link
+            href="/customers"
+            className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-700 hover:bg-slate-200 transition-colors shadow-2xs"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Link>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900">
+                {customer.name}
+              </h1>
+              {customer.isArchived ? (
+                <span className="text-xs px-2.5 py-0.5 rounded-full bg-red-100 text-red-700 font-semibold">Archived</span>
+              ) : (
+                <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-semibold">Active Client</span>
+              )}
+            </div>
+            <p className="text-xs text-slate-400">Account profiles, recurring contracts, and invoice billing history</p>
+          </div>
+        </div>
 
         <Button
           variant="outline"
           size="sm"
           onClick={handleArchive}
-          className="text-xs text-red-600 hover:bg-red-50 hover:text-red-700 border-red-200"
+          className="h-9 px-4 rounded-full text-xs text-red-600 bg-white hover:bg-red-50 hover:text-red-700 border-red-200 shadow-2xs"
         >
           <Archive className="mr-1.5 h-3.5 w-3.5" />
           Archive Account
