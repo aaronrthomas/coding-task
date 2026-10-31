@@ -4,18 +4,20 @@
 -- URL: https://supabase.com/dashboard/project/hknaaykwtboelqfyjjcp/sql/new
 -- =====================================================================
 
--- ==================== PART 1: SCHEMA ====================
+-- ==================== PART 1: ENUMS ====================
+-- Use DO blocks to safely create enums (PostgreSQL has no CREATE TYPE IF NOT EXISTS)
 
--- CreateEnum
-CREATE TYPE IF NOT EXISTS "Role" AS ENUM ('ADMIN', 'STAFF', 'CUSTOMER');
-CREATE TYPE IF NOT EXISTS "ProductType" AS ENUM ('SOFTWARE', 'SERVICE', 'HARDWARE', 'SUBSCRIPTION_TIER');
-CREATE TYPE IF NOT EXISTS "BillingFrequency" AS ENUM ('DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY');
-CREATE TYPE IF NOT EXISTS "QuotationStatus" AS ENUM ('DRAFT', 'SENT', 'ACCEPTED', 'EXPIRED', 'CANCELLED');
-CREATE TYPE IF NOT EXISTS "SubscriptionStatus" AS ENUM ('DRAFT', 'QUOTATION', 'CONFIRMED', 'ACTIVE', 'PAUSED', 'CLOSED');
-CREATE TYPE IF NOT EXISTS "InvoiceStatus" AS ENUM ('DRAFT', 'CONFIRMED', 'PAID', 'CANCELLED');
-CREATE TYPE IF NOT EXISTS "PaymentMethod" AS ENUM ('BANK_TRANSFER', 'UPI', 'CARD', 'CASH', 'OTHER');
-CREATE TYPE IF NOT EXISTS "DiscountType" AS ENUM ('FIXED', 'PERCENTAGE');
-CREATE TYPE IF NOT EXISTS "BillingRecordStatus" AS ENUM ('SUCCESS', 'FAILED', 'SKIPPED');
+DO $$ BEGIN CREATE TYPE "Role" AS ENUM ('ADMIN', 'STAFF', 'CUSTOMER'); EXCEPTION WHEN duplicate_object THEN null; END $$;
+DO $$ BEGIN CREATE TYPE "ProductType" AS ENUM ('SOFTWARE', 'SERVICE', 'HARDWARE', 'SUBSCRIPTION_TIER'); EXCEPTION WHEN duplicate_object THEN null; END $$;
+DO $$ BEGIN CREATE TYPE "BillingFrequency" AS ENUM ('DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY'); EXCEPTION WHEN duplicate_object THEN null; END $$;
+DO $$ BEGIN CREATE TYPE "QuotationStatus" AS ENUM ('DRAFT', 'SENT', 'ACCEPTED', 'EXPIRED', 'CANCELLED'); EXCEPTION WHEN duplicate_object THEN null; END $$;
+DO $$ BEGIN CREATE TYPE "SubscriptionStatus" AS ENUM ('DRAFT', 'QUOTATION', 'CONFIRMED', 'ACTIVE', 'PAUSED', 'CLOSED'); EXCEPTION WHEN duplicate_object THEN null; END $$;
+DO $$ BEGIN CREATE TYPE "InvoiceStatus" AS ENUM ('DRAFT', 'CONFIRMED', 'PAID', 'CANCELLED'); EXCEPTION WHEN duplicate_object THEN null; END $$;
+DO $$ BEGIN CREATE TYPE "PaymentMethod" AS ENUM ('BANK_TRANSFER', 'UPI', 'CARD', 'CASH', 'OTHER'); EXCEPTION WHEN duplicate_object THEN null; END $$;
+DO $$ BEGIN CREATE TYPE "DiscountType" AS ENUM ('FIXED', 'PERCENTAGE'); EXCEPTION WHEN duplicate_object THEN null; END $$;
+DO $$ BEGIN CREATE TYPE "BillingRecordStatus" AS ENUM ('SUCCESS', 'FAILED', 'SKIPPED'); EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+-- ==================== PART 2: TABLES ====================
 
 CREATE TABLE IF NOT EXISTS "User" (
     "id" TEXT NOT NULL,
@@ -304,7 +306,8 @@ CREATE TABLE IF NOT EXISTS "AuditLog" (
     CONSTRAINT "AuditLog_pkey" PRIMARY KEY ("id")
 );
 
--- Unique + indexes
+-- ==================== PART 3: INDEXES ====================
+
 CREATE UNIQUE INDEX IF NOT EXISTS "User_email_key" ON "User"("email");
 CREATE UNIQUE INDEX IF NOT EXISTS "User_supabaseUid_key" ON "User"("supabaseUid");
 CREATE INDEX IF NOT EXISTS "User_email_idx" ON "User"("email");
@@ -314,55 +317,171 @@ CREATE UNIQUE INDEX IF NOT EXISTS "Customer_email_key" ON "Customer"("email");
 CREATE INDEX IF NOT EXISTS "Customer_email_idx" ON "Customer"("email");
 CREATE INDEX IF NOT EXISTS "Customer_isArchived_idx" ON "Customer"("isArchived");
 CREATE INDEX IF NOT EXISTS "Product_isActive_idx" ON "Product"("isActive");
+CREATE INDEX IF NOT EXISTS "ProductVariant_productId_idx" ON "ProductVariant"("productId");
 CREATE INDEX IF NOT EXISTS "Plan_productId_idx" ON "Plan"("productId");
 CREATE INDEX IF NOT EXISTS "Plan_isActive_idx" ON "Plan"("isActive");
 CREATE UNIQUE INDEX IF NOT EXISTS "Quotation_quotationNumber_key" ON "Quotation"("quotationNumber");
+CREATE INDEX IF NOT EXISTS "Quotation_customerId_idx" ON "Quotation"("customerId");
+CREATE INDEX IF NOT EXISTS "QuotationItem_quotationId_idx" ON "QuotationItem"("quotationId");
 CREATE UNIQUE INDEX IF NOT EXISTS "Subscription_subscriptionNumber_key" ON "Subscription"("subscriptionNumber");
 CREATE INDEX IF NOT EXISTS "Subscription_customerId_idx" ON "Subscription"("customerId");
 CREATE INDEX IF NOT EXISTS "Subscription_status_idx" ON "Subscription"("status");
 CREATE INDEX IF NOT EXISTS "Subscription_nextBillingDate_idx" ON "Subscription"("nextBillingDate");
+CREATE INDEX IF NOT EXISTS "SubscriptionItem_subscriptionId_idx" ON "SubscriptionItem"("subscriptionId");
+CREATE INDEX IF NOT EXISTS "SubscriptionStatusHistory_subscriptionId_idx" ON "SubscriptionStatusHistory"("subscriptionId");
 CREATE UNIQUE INDEX IF NOT EXISTS "TaxRuleProduct_taxRuleId_productId_key" ON "TaxRuleProduct"("taxRuleId", "productId");
+CREATE INDEX IF NOT EXISTS "TaxRule_isActive_idx" ON "TaxRule"("isActive");
 CREATE UNIQUE INDEX IF NOT EXISTS "DiscountRule_code_key" ON "DiscountRule"("code");
+CREATE INDEX IF NOT EXISTS "DiscountRule_isActive_idx" ON "DiscountRule"("isActive");
+CREATE INDEX IF NOT EXISTS "DiscountUsage_discountRuleId_idx" ON "DiscountUsage"("discountRuleId");
 CREATE UNIQUE INDEX IF NOT EXISTS "Invoice_invoiceNumber_key" ON "Invoice"("invoiceNumber");
+CREATE INDEX IF NOT EXISTS "Invoice_customerId_idx" ON "Invoice"("customerId");
+CREATE INDEX IF NOT EXISTS "Invoice_status_idx" ON "Invoice"("status");
 CREATE UNIQUE INDEX IF NOT EXISTS "Invoice_subscriptionId_periodStart_periodEnd_key" ON "Invoice"("subscriptionId", "periodStart", "periodEnd");
+CREATE INDEX IF NOT EXISTS "InvoiceItem_invoiceId_idx" ON "InvoiceItem"("invoiceId");
 CREATE UNIQUE INDEX IF NOT EXISTS "Payment_paymentReference_key" ON "Payment"("paymentReference");
+CREATE INDEX IF NOT EXISTS "Payment_invoiceId_idx" ON "Payment"("invoiceId");
+CREATE INDEX IF NOT EXISTS "Payment_customerId_idx" ON "Payment"("customerId");
 CREATE UNIQUE INDEX IF NOT EXISTS "BillingRecord_subscriptionId_periodStart_periodEnd_key" ON "BillingRecord"("subscriptionId", "periodStart", "periodEnd");
+CREATE INDEX IF NOT EXISTS "AuditLog_entity_idx" ON "AuditLog"("entity");
+CREATE INDEX IF NOT EXISTS "AuditLog_createdAt_idx" ON "AuditLog"("createdAt");
 
--- Foreign keys
-ALTER TABLE "Customer" DROP CONSTRAINT IF EXISTS "Customer_userId_fkey";
-ALTER TABLE "Customer" ADD CONSTRAINT "Customer_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-ALTER TABLE "ProductVariant" DROP CONSTRAINT IF EXISTS "ProductVariant_productId_fkey";
-ALTER TABLE "ProductVariant" ADD CONSTRAINT "ProductVariant_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE "Plan" DROP CONSTRAINT IF EXISTS "Plan_productId_fkey";
-ALTER TABLE "Plan" ADD CONSTRAINT "Plan_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-ALTER TABLE "QuotationTemplate" DROP CONSTRAINT IF EXISTS "QuotationTemplate_defaultPlanId_fkey";
-ALTER TABLE "QuotationTemplate" ADD CONSTRAINT "QuotationTemplate_defaultPlanId_fkey" FOREIGN KEY ("defaultPlanId") REFERENCES "Plan"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-ALTER TABLE "Quotation" DROP CONSTRAINT IF EXISTS "Quotation_customerId_fkey";
-ALTER TABLE "Quotation" ADD CONSTRAINT "Quotation_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "Customer"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-ALTER TABLE "QuotationItem" DROP CONSTRAINT IF EXISTS "QuotationItem_quotationId_fkey";
-ALTER TABLE "QuotationItem" ADD CONSTRAINT "QuotationItem_quotationId_fkey" FOREIGN KEY ("quotationId") REFERENCES "Quotation"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE "Subscription" DROP CONSTRAINT IF EXISTS "Subscription_customerId_fkey";
-ALTER TABLE "Subscription" ADD CONSTRAINT "Subscription_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "Customer"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-ALTER TABLE "Subscription" DROP CONSTRAINT IF EXISTS "Subscription_planId_fkey";
-ALTER TABLE "Subscription" ADD CONSTRAINT "Subscription_planId_fkey" FOREIGN KEY ("planId") REFERENCES "Plan"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-ALTER TABLE "SubscriptionItem" DROP CONSTRAINT IF EXISTS "SubscriptionItem_subscriptionId_fkey";
-ALTER TABLE "SubscriptionItem" ADD CONSTRAINT "SubscriptionItem_subscriptionId_fkey" FOREIGN KEY ("subscriptionId") REFERENCES "Subscription"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE "SubscriptionStatusHistory" DROP CONSTRAINT IF EXISTS "SubscriptionStatusHistory_subscriptionId_fkey";
-ALTER TABLE "SubscriptionStatusHistory" ADD CONSTRAINT "SubscriptionStatusHistory_subscriptionId_fkey" FOREIGN KEY ("subscriptionId") REFERENCES "Subscription"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE "Invoice" DROP CONSTRAINT IF EXISTS "Invoice_customerId_fkey";
-ALTER TABLE "Invoice" ADD CONSTRAINT "Invoice_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "Customer"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-ALTER TABLE "InvoiceItem" DROP CONSTRAINT IF EXISTS "InvoiceItem_invoiceId_fkey";
-ALTER TABLE "InvoiceItem" ADD CONSTRAINT "InvoiceItem_invoiceId_fkey" FOREIGN KEY ("invoiceId") REFERENCES "Invoice"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE "Payment" DROP CONSTRAINT IF EXISTS "Payment_invoiceId_fkey";
-ALTER TABLE "Payment" ADD CONSTRAINT "Payment_invoiceId_fkey" FOREIGN KEY ("invoiceId") REFERENCES "Invoice"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-ALTER TABLE "Payment" DROP CONSTRAINT IF EXISTS "Payment_customerId_fkey";
-ALTER TABLE "Payment" ADD CONSTRAINT "Payment_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "Customer"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-ALTER TABLE "BillingRecord" DROP CONSTRAINT IF EXISTS "BillingRecord_subscriptionId_fkey";
-ALTER TABLE "BillingRecord" ADD CONSTRAINT "BillingRecord_subscriptionId_fkey" FOREIGN KEY ("subscriptionId") REFERENCES "Subscription"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE "AuditLog" DROP CONSTRAINT IF EXISTS "AuditLog_userId_fkey";
-ALTER TABLE "AuditLog" ADD CONSTRAINT "AuditLog_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+-- ==================== PART 4: FOREIGN KEYS ====================
 
--- Enable Row Level Security (but allow full access for service_role)
+DO $$ BEGIN
+  ALTER TABLE "Customer" ADD CONSTRAINT "Customer_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "ProductVariant" ADD CONSTRAINT "ProductVariant_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "Plan" ADD CONSTRAINT "Plan_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "QuotationTemplate" ADD CONSTRAINT "QuotationTemplate_defaultPlanId_fkey" FOREIGN KEY ("defaultPlanId") REFERENCES "Plan"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "Quotation" ADD CONSTRAINT "Quotation_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "Customer"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "QuotationItem" ADD CONSTRAINT "QuotationItem_quotationId_fkey" FOREIGN KEY ("quotationId") REFERENCES "Quotation"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "QuotationItem" ADD CONSTRAINT "QuotationItem_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "QuotationItem" ADD CONSTRAINT "QuotationItem_variantId_fkey" FOREIGN KEY ("variantId") REFERENCES "ProductVariant"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "Subscription" ADD CONSTRAINT "Subscription_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "Customer"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "Subscription" ADD CONSTRAINT "Subscription_planId_fkey" FOREIGN KEY ("planId") REFERENCES "Plan"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "SubscriptionItem" ADD CONSTRAINT "SubscriptionItem_subscriptionId_fkey" FOREIGN KEY ("subscriptionId") REFERENCES "Subscription"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "SubscriptionItem" ADD CONSTRAINT "SubscriptionItem_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "SubscriptionItem" ADD CONSTRAINT "SubscriptionItem_variantId_fkey" FOREIGN KEY ("variantId") REFERENCES "ProductVariant"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "SubscriptionStatusHistory" ADD CONSTRAINT "SubscriptionStatusHistory_subscriptionId_fkey" FOREIGN KEY ("subscriptionId") REFERENCES "Subscription"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "SubscriptionStatusHistory" ADD CONSTRAINT "SubscriptionStatusHistory_changedByUserId_fkey" FOREIGN KEY ("changedByUserId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "TaxRuleProduct" ADD CONSTRAINT "TaxRuleProduct_taxRuleId_fkey" FOREIGN KEY ("taxRuleId") REFERENCES "TaxRule"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "TaxRuleProduct" ADD CONSTRAINT "TaxRuleProduct_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "DiscountRule" ADD CONSTRAINT "DiscountRule_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "DiscountUsage" ADD CONSTRAINT "DiscountUsage_discountRuleId_fkey" FOREIGN KEY ("discountRuleId") REFERENCES "DiscountRule"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "DiscountUsage" ADD CONSTRAINT "DiscountUsage_subscriptionId_fkey" FOREIGN KEY ("subscriptionId") REFERENCES "Subscription"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "DiscountUsage" ADD CONSTRAINT "DiscountUsage_invoiceId_fkey" FOREIGN KEY ("invoiceId") REFERENCES "Invoice"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "DiscountUsage" ADD CONSTRAINT "DiscountUsage_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "Customer"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "Invoice" ADD CONSTRAINT "Invoice_subscriptionId_fkey" FOREIGN KEY ("subscriptionId") REFERENCES "Subscription"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "Invoice" ADD CONSTRAINT "Invoice_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "Customer"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "InvoiceItem" ADD CONSTRAINT "InvoiceItem_invoiceId_fkey" FOREIGN KEY ("invoiceId") REFERENCES "Invoice"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "InvoiceItem" ADD CONSTRAINT "InvoiceItem_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "InvoiceItem" ADD CONSTRAINT "InvoiceItem_variantId_fkey" FOREIGN KEY ("variantId") REFERENCES "ProductVariant"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "Payment" ADD CONSTRAINT "Payment_invoiceId_fkey" FOREIGN KEY ("invoiceId") REFERENCES "Invoice"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "Payment" ADD CONSTRAINT "Payment_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "Customer"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "Payment" ADD CONSTRAINT "Payment_recordedByUserId_fkey" FOREIGN KEY ("recordedByUserId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "BillingRecord" ADD CONSTRAINT "BillingRecord_subscriptionId_fkey" FOREIGN KEY ("subscriptionId") REFERENCES "Subscription"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "BillingRecord" ADD CONSTRAINT "BillingRecord_invoiceId_fkey" FOREIGN KEY ("invoiceId") REFERENCES "Invoice"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+  ALTER TABLE "AuditLog" ADD CONSTRAINT "AuditLog_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+-- ==================== PART 5: ROW LEVEL SECURITY ====================
+
 ALTER TABLE "User" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "Customer" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "Product" ENABLE ROW LEVEL SECURITY;
@@ -370,17 +489,22 @@ ALTER TABLE "Plan" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "Subscription" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "Invoice" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "Payment" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "BillingRecord" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "AuditLog" ENABLE ROW LEVEL SECURITY;
 
--- Service role bypass (so server-side Prisma queries always work)
-CREATE POLICY IF NOT EXISTS "service_role_all_User" ON "User" TO service_role USING (true) WITH CHECK (true);
-CREATE POLICY IF NOT EXISTS "service_role_all_Customer" ON "Customer" TO service_role USING (true) WITH CHECK (true);
-CREATE POLICY IF NOT EXISTS "service_role_all_Product" ON "Product" TO service_role USING (true) WITH CHECK (true);
-CREATE POLICY IF NOT EXISTS "service_role_all_Plan" ON "Plan" TO service_role USING (true) WITH CHECK (true);
-CREATE POLICY IF NOT EXISTS "service_role_all_Subscription" ON "Subscription" TO service_role USING (true) WITH CHECK (true);
-CREATE POLICY IF NOT EXISTS "service_role_all_Invoice" ON "Invoice" TO service_role USING (true) WITH CHECK (true);
-CREATE POLICY IF NOT EXISTS "service_role_all_Payment" ON "Payment" TO service_role USING (true) WITH CHECK (true);
+-- Allow service_role to bypass RLS (server-side Prisma queries)
+-- service_role already bypasses RLS in Supabase by default, but explicit policies help
+CREATE POLICY "allow_all_service_role_User" ON "User" TO service_role USING (true) WITH CHECK (true);
+CREATE POLICY "allow_all_service_role_Customer" ON "Customer" TO service_role USING (true) WITH CHECK (true);
+CREATE POLICY "allow_all_service_role_Product" ON "Product" TO service_role USING (true) WITH CHECK (true);
+CREATE POLICY "allow_all_service_role_Plan" ON "Plan" TO service_role USING (true) WITH CHECK (true);
+CREATE POLICY "allow_all_service_role_Subscription" ON "Subscription" TO service_role USING (true) WITH CHECK (true);
+CREATE POLICY "allow_all_service_role_Invoice" ON "Invoice" TO service_role USING (true) WITH CHECK (true);
+CREATE POLICY "allow_all_service_role_Payment" ON "Payment" TO service_role USING (true) WITH CHECK (true);
+CREATE POLICY "allow_all_service_role_BillingRecord" ON "BillingRecord" TO service_role USING (true) WITH CHECK (true);
+CREATE POLICY "allow_all_service_role_AuditLog" ON "AuditLog" TO service_role USING (true) WITH CHECK (true);
 
--- ==================== PART 2: SEED DATA ====================
+-- ==================== PART 6: SEED DATA ====================
 
 -- Admin user (password: AdminPass@2026)
 INSERT INTO "User" ("id", "email", "name", "passwordHash", "role", "isActive", "createdAt", "updatedAt")
@@ -389,10 +513,7 @@ VALUES (
   'admin@brightloop.com',
   'System Administrator',
   '$2b$10$BpP3aku7xSs66Dw51SRPZOQa6YrS0x/j2gr0eUpRvbZILgY4aZKiO',
-  'ADMIN',
-  true,
-  NOW(),
-  NOW()
+  'ADMIN', true, NOW(), NOW()
 ) ON CONFLICT ("email") DO NOTHING;
 
 -- Staff user 1 (password: StaffPass@2026)
@@ -402,10 +523,7 @@ VALUES (
   'sarah.staff@brightloop.com',
   'Sarah Jenkins',
   '$2b$10$6S.T6OZR0umNUaMGS2MjcOnavJ2Kei/vtOrhRCta6AS5UMX1NZDTW',
-  'STAFF',
-  true,
-  NOW(),
-  NOW()
+  'STAFF', true, NOW(), NOW()
 ) ON CONFLICT ("email") DO NOTHING;
 
 -- Staff user 2 (password: StaffPass@2026)
@@ -415,43 +533,57 @@ VALUES (
   'david.billing@brightloop.com',
   'David Billing',
   '$2b$10$6S.T6OZR0umNUaMGS2MjcOnavJ2Kei/vtOrhRCta6AS5UMX1NZDTW',
-  'STAFF',
-  true,
-  NOW(),
-  NOW()
+  'STAFF', true, NOW(), NOW()
 ) ON CONFLICT ("email") DO NOTHING;
 
--- Customer user + profile: Alex Morgan (password: CustPass@2026!)
+-- Customer 1: Alex Morgan (password: CustPass@2026!)
 DO $$
 DECLARE
-  u_id TEXT := gen_random_uuid()::text;
-  c_id TEXT := gen_random_uuid()::text;
+  u_id TEXT;
+  c_id TEXT;
 BEGIN
+  u_id := gen_random_uuid()::text;
+  c_id := gen_random_uuid()::text;
   INSERT INTO "User" ("id", "email", "name", "passwordHash", "role", "isActive", "createdAt", "updatedAt")
   VALUES (u_id, 'alex@acmecorp.com', 'Alex Morgan', '$2b$10$fSYYad37oCGsz5arePZa3evPKVbQIV/IG2O.z3KsVElw9/9RMYkR.', 'CUSTOMER', true, NOW(), NOW())
   ON CONFLICT ("email") DO NOTHING;
-
   SELECT "id" INTO u_id FROM "User" WHERE email = 'alex@acmecorp.com';
-
   INSERT INTO "Customer" ("id", "userId", "name", "email", "companyName", "phone", "billingAddress", "taxId", "createdAt", "updatedAt")
-  VALUES (c_id, u_id, 'Alex Morgan', 'alex@acmecorp.com', 'Acme Corp Technologies', '+91 98765 11111', 'Tower B, Tech Park, Bangalore', '29ABCDE1234F1Z5', NOW(), NOW())
+  VALUES (c_id, u_id, 'Alex Morgan', 'alex@acmecorp.com', 'Acme Corp Technologies', '+91 98765 11111', 'Tower B, Tech Park, Bangalore, KA', '29ABCDE1234F1Z5', NOW(), NOW())
   ON CONFLICT ("email") DO NOTHING;
 END $$;
 
--- Customer user + profile: Priya Sharma
+-- Customer 2: Priya Sharma (password: CustPass@2026!)
 DO $$
 DECLARE
-  u_id TEXT := gen_random_uuid()::text;
-  c_id TEXT := gen_random_uuid()::text;
+  u_id TEXT;
+  c_id TEXT;
 BEGIN
+  u_id := gen_random_uuid()::text;
+  c_id := gen_random_uuid()::text;
   INSERT INTO "User" ("id", "email", "name", "passwordHash", "role", "isActive", "createdAt", "updatedAt")
   VALUES (u_id, 'priya@techvision.io', 'Priya Sharma', '$2b$10$fSYYad37oCGsz5arePZa3evPKVbQIV/IG2O.z3KsVElw9/9RMYkR.', 'CUSTOMER', true, NOW(), NOW())
   ON CONFLICT ("email") DO NOTHING;
-
   SELECT "id" INTO u_id FROM "User" WHERE email = 'priya@techvision.io';
-
   INSERT INTO "Customer" ("id", "userId", "name", "email", "companyName", "phone", "billingAddress", "taxId", "createdAt", "updatedAt")
   VALUES (c_id, u_id, 'Priya Sharma', 'priya@techvision.io', 'TechVision Analytics Pvt Ltd', '+91 98765 22222', 'Cyber City, Gurugram, HR', '06AAACT4321K1Z2', NOW(), NOW())
+  ON CONFLICT ("email") DO NOTHING;
+END $$;
+
+-- Customer 3: Marco Rossi (password: CustPass@2026!)
+DO $$
+DECLARE
+  u_id TEXT;
+  c_id TEXT;
+BEGIN
+  u_id := gen_random_uuid()::text;
+  c_id := gen_random_uuid()::text;
+  INSERT INTO "User" ("id", "email", "name", "passwordHash", "role", "isActive", "createdAt", "updatedAt")
+  VALUES (u_id, 'marco@globallogistics.com', 'Marco Rossi', '$2b$10$fSYYad37oCGsz5arePZa3evPKVbQIV/IG2O.z3KsVElw9/9RMYkR.', 'CUSTOMER', true, NOW(), NOW())
+  ON CONFLICT ("email") DO NOTHING;
+  SELECT "id" INTO u_id FROM "User" WHERE email = 'marco@globallogistics.com';
+  INSERT INTO "Customer" ("id", "userId", "name", "email", "companyName", "phone", "billingAddress", "taxId", "createdAt", "updatedAt")
+  VALUES (c_id, u_id, 'Marco Rossi', 'marco@globallogistics.com', 'Global Logistics Software Inc', '+91 98765 33333', 'Bandra Kurla Complex, Mumbai, MH', '27AABCG9876L1Z8', NOW(), NOW())
   ON CONFLICT ("email") DO NOTHING;
 END $$;
 
@@ -461,7 +593,8 @@ VALUES
   (gen_random_uuid()::text, 'Brightloop Core Suite', 'SOFTWARE', 4999.00, 1200.00, 'Full-featured subscription management platform', true, NOW(), NOW()),
   (gen_random_uuid()::text, 'Analytics Pro Module', 'SOFTWARE', 2499.00, 600.00, 'Advanced analytics and reporting module', true, NOW(), NOW()),
   (gen_random_uuid()::text, 'Priority Support Service', 'SERVICE', 1999.00, 400.00, '24/7 dedicated support with 1-hour SLA', true, NOW(), NOW()),
-  (gen_random_uuid()::text, 'Starter Plan', 'SUBSCRIPTION_TIER', 999.00, 250.00, 'Entry-level subscription tier', true, NOW(), NOW())
+  (gen_random_uuid()::text, 'Starter Plan', 'SUBSCRIPTION_TIER', 999.00, 250.00, 'Entry-level subscription tier', true, NOW(), NOW()),
+  (gen_random_uuid()::text, 'Enterprise Suite', 'SOFTWARE', 14999.00, 3500.00, 'Full enterprise feature set with unlimited users', true, NOW(), NOW())
 ON CONFLICT DO NOTHING;
 
 -- Tax Rules
@@ -476,8 +609,8 @@ ON CONFLICT DO NOTHING;
 INSERT INTO "DiscountRule" ("id", "code", "name", "type", "value", "maxUses", "currentUses", "isActive", "isWholeSubscription", "createdAt", "updatedAt")
 VALUES
   (gen_random_uuid()::text, 'LAUNCH20', 'Launch Offer 20%', 'PERCENTAGE', 20.00, 100, 0, true, true, NOW(), NOW()),
-  (gen_random_uuid()::text, 'FLAT500', 'Flat ₹500 Off', 'FIXED', 500.00, 50, 0, true, true, NOW(), NOW()),
+  (gen_random_uuid()::text, 'FLAT500', 'Flat 500 Off', 'FIXED', 500.00, 50, 0, true, true, NOW(), NOW()),
   (gen_random_uuid()::text, 'ANNUAL15', 'Annual Subscription 15%', 'PERCENTAGE', 15.00, NULL, 0, true, true, NOW(), NOW())
 ON CONFLICT ("code") DO NOTHING;
 
-SELECT 'Brightloop database schema and seed data applied successfully!' as result;
+SELECT 'SUCCESS: Brightloop database schema and seed data applied!' AS result;
