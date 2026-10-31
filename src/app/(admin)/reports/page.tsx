@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select } from '@/components/ui/select';
@@ -213,7 +214,7 @@ export default function ReportsPage() {
                         <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(val: number) => formatCurrency(val)} />
+                    <Tooltip formatter={(val: any) => formatCurrency(Number(val) || 0)} />
                     <Legend wrapperStyle={{ fontSize: '11px' }} />
                   </PieChart>
                 </ResponsiveContainer>

@@ -210,7 +210,7 @@ export default function DashboardPage() {
                       tickFormatter={(v) => `₹${v.toLocaleString()}`}
                     />
                     <Tooltip
-                      formatter={(val: number) => formatCurrency(val)}
+                      formatter={(val: any) => formatCurrency(Number(val) || 0)}
                       contentStyle={{
                         backgroundColor: '#ffffff',
                         borderColor: '#e2e8f0',

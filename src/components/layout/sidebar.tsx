@@ -112,7 +112,7 @@ export function Sidebar({ user }: SidebarProps) {
   ];
 
   // Filter items based on user role
-  const visibleItems = navItems.filter((item) => item.roles.includes(user.role));
+  const visibleItems = navItems.filter((item) => (item.roles as Role[]).includes(user.role));
 
   return (
     <aside className="w-64 border-r border-slate-200 bg-white flex flex-col shrink-0 min-h-screen">
